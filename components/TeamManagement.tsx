@@ -3,6 +3,7 @@ import React, { useState, useRef } from 'react';
 import * as XLSX from 'xlsx';
 import { Team, UserRole } from '../types';
 import { DEFAULT_TEAM_BUDGET } from '../constants';
+import { generateUUID } from '../utils';
 
 interface TeamManagementProps {
   teams: Team[];
@@ -61,7 +62,7 @@ export const TeamManagement: React.FC<TeamManagementProps> = ({ teams, setTeams,
     e.preventDefault();
     const team: Team = {
       ...newTeam,
-      id: crypto.randomUUID(),
+      id: generateUUID(),
       remainingBudget: newTeam.initialBudget
     };
     setTeams([...teams, team]);
@@ -100,7 +101,7 @@ export const TeamManagement: React.FC<TeamManagementProps> = ({ teams, setTeams,
           const budget = Number(item['Initial Budget'] || item['Starting Budget'] || item['Budget'] || DEFAULT_TEAM_BUDGET);
 
           return {
-            id: crypto.randomUUID(),
+            id: generateUUID(),
             name: String(name).trim(),
             manager: String(manager).trim(),
             initialBudget: isNaN(budget) ? DEFAULT_TEAM_BUDGET : budget,
@@ -130,7 +131,7 @@ export const TeamManagement: React.FC<TeamManagementProps> = ({ teams, setTeams,
         <h2 className="text-2xl font-bold text-slate-800">Team Registry</h2>
         {role === UserRole.ADMIN && (
           <div className="flex flex-wrap gap-3">
-            <button
+            {/* <button
               onClick={onClearAll}
               className="bg-red-50 text-red-600 border border-red-200 px-4 py-2 rounded-lg font-bold hover:bg-red-100 transition shadow-sm text-sm"
             >
@@ -149,7 +150,7 @@ export const TeamManagement: React.FC<TeamManagementProps> = ({ teams, setTeams,
               className="hidden"
               accept=".xlsx,.xls"
               onChange={handleExcelImport}
-            />
+            /> */}
             <button
               onClick={() => setShowForm(true)}
               className="bg-therap text-white px-4 py-2 rounded-lg font-bold hover:bg-blue-800 transition shadow text-sm"

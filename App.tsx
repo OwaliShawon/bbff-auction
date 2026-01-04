@@ -1,7 +1,8 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { io, Socket } from 'socket.io-client';
-import { Player, Team, AuctionState, UserRole, PlayerStatus, PlayerCategory } from './types';
+import { generateUUID } from './utils';
+import { Player, Team, AuctionState, UserRole, PlayerStatus, PlayerCategory, AuctionLogEntry, AuctionLogAction } from './types';
 import {
   CATEGORY_BASE_PRICES,
   INITIAL_TEAMS,
@@ -12,13 +13,15 @@ import {
   MIN_CAT_B,
   MIN_CAT_C,
   CAT_B_END_SQUAD_THRESHOLD,
-  CAT_B_MIN_REMAINING_BUDGET
+  CAT_B_MIN_REMAINING_BUDGET,
+  MAX_CAT_A_PLUS_B
 } from './constants';
 import { Layout } from './components/Layout';
 import { AuctionDashboard } from './components/AuctionDashboard';
 import { PlayerManagement } from './components/PlayerManagement';
 import { TeamManagement } from './components/TeamManagement';
 import { Reports } from './components/Reports';
+import { LotteryResultModal } from './components/LotteryResultModal';
 
 const App: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'auction' | 'players' | 'teams' | 'reports'>('auction');
@@ -31,13 +34,21 @@ const App: React.FC = () => {
     biddingTeamIds: [],
     isActive: false
   });
+  const [lotteryResult, setLotteryResult] = useState<{
+    winnerId: string;
+    winnerName: string;
+    calculation: string;
+    teamList: { index: number; name: string }[];
+  } | null>(null);
+
+  const [auctionLog, setAuctionLog] = useState<AuctionLogEntry[]>([]);
 
   const socketRef = useRef<Socket | null>(null);
 
   // Socket.IO Connection
   useEffect(() => {
     // Connect to server
-    const socket = io(`http://${window.location.hostname}:3001`);
+    const socket = io(`http://${window.location.hostname}:7002`);
     socketRef.current = socket;
 
     socket.on('connect', () => {
@@ -49,6 +60,7 @@ const App: React.FC = () => {
       if (data.players) setPlayers(data.players);
       if (data.teams) setTeams(data.teams);
       if (data.auction) setAuction(data.auction);
+      if (data.auctionLog) setAuctionLog(data.auctionLog);
     });
 
     socket.on('state_update', (data: any) => {
@@ -56,6 +68,7 @@ const App: React.FC = () => {
       if (data.players) setPlayers(data.players);
       if (data.teams) setTeams(data.teams);
       if (data.auction) setAuction(data.auction);
+      if (data.auctionLog) setAuctionLog(data.auctionLog);
     });
 
     return () => {
@@ -64,7 +77,7 @@ const App: React.FC = () => {
   }, []);
 
   // Sync Wrappers
-  const broadcastUpdate = (key: 'players' | 'teams' | 'auction', data: any) => {
+  const broadcastUpdate = (key: 'players' | 'teams' | 'auction' | 'auctionLog', data: any) => {
     // Update local state is handled by the caller via the standard setter, but 
     // we need to know the NEW data. 
     // To simplify: I will create wrappers for setPlayers, setTeams, etc that do both.
@@ -98,6 +111,31 @@ const App: React.FC = () => {
     });
   };
 
+  const handleSetAuctionLog = (newLog: AuctionLogEntry[] | ((prev: AuctionLogEntry[]) => AuctionLogEntry[])) => {
+    setAuctionLog(prev => {
+      const resolved = typeof newLog === 'function' ? newLog(prev) : newLog;
+      broadcastUpdate('auctionLog', resolved);
+      return resolved;
+    });
+  };
+
+
+
+  const addLogEntry = (action: AuctionLogAction, player: Player, amount?: number, teamId?: string) => {
+    const entry: AuctionLogEntry = {
+      id: generateUUID(),
+      timestamp: Date.now(),
+      action,
+      playerId: player.id,
+      playerName: player.name,
+      playerCategory: player.category,
+      amount,
+      teamId,
+      teamName: teamId ? teams.find(t => t.id === teamId)?.name : undefined
+    };
+    handleSetAuctionLog(prev => [entry, ...prev]);
+  };
+
 
   const validateBid = (teamId: string, bidAmount: number): { valid: boolean; error?: string } => {
     const team = teams.find(t => t.id === teamId);
@@ -118,6 +156,8 @@ const App: React.FC = () => {
       if (currentCatASpend + bidAmount > CAT_A_MAX_SPEND) return { valid: false, error: 'Exceeds Cat A 60k limit' };
     }
 
+    // // Rule 1.b: Category A therfa
+
     // Rule 7 & 2: Squad Completion & Minimum Quotas
     const slotsLeft = MIN_SQUAD_SIZE - squad.length - 1;
 
@@ -131,34 +171,42 @@ const App: React.FC = () => {
     const minReserve = (needsA * CATEGORY_BASE_PRICES[PlayerCategory.A]) +
       (needsB * CATEGORY_BASE_PRICES[PlayerCategory.B]) +
       (needsC * CATEGORY_BASE_PRICES[PlayerCategory.C]) +
-      (genericSlotsNeeded * CATEGORY_BASE_PRICES[PlayerCategory.C]);
+      (genericSlotsNeeded * CATEGORY_BASE_PRICES[PlayerCategory.B]);
 
-    if (team.remainingBudget - bidAmount < minReserve) {
-      return { valid: false, error: 'Must reserve funds for remaining squad requirements' };
-    }
+    // if (team.remainingBudget - bidAmount < minReserve) {
+    //   return { valid: false, error: 'Must reserve funds for remaining squad requirements' };
+    // }
 
     // Rule 3: End of Category B Budget Rule
-    const remainingCatB = players.filter(p => p.category === PlayerCategory.B && p.status === PlayerStatus.UNSOLD).length;
-    if (remainingCatB === 0 || (remainingCatB === 1 && player.category === PlayerCategory.B)) {
-      const futureSquadSize = squad.length + 1;
-      const futureBudget = team.remainingBudget - bidAmount;
-      if (futureSquadSize >= CAT_B_END_SQUAD_THRESHOLD && futureBudget < CAT_B_MIN_REMAINING_BUDGET) {
-        return { valid: false, error: `End of Cat B: Must have ${CAT_B_MIN_REMAINING_BUDGET / 1000}k left if squad >= ${CAT_B_END_SQUAD_THRESHOLD}` };
-      }
-    }
+    // const remainingCatB = players.filter(p => p.category === PlayerCategory.B && p.status === PlayerStatus.UNSOLD).length;
+    // if (remainingCatB === 0 || (remainingCatB === 1 && player.category === PlayerCategory.B)) {
+    //   const futureSquadSize = squad.length + 1;
+    //   const futureBudget = team.remainingBudget - bidAmount;
+    //   if (futureSquadSize >= CAT_B_END_SQUAD_THRESHOLD && futureBudget < CAT_B_MIN_REMAINING_BUDGET) {
+    //     return { valid: false, error: `End of Cat B: Must have ${CAT_B_MIN_REMAINING_BUDGET / 1000}k left if squad >= ${CAT_B_END_SQUAD_THRESHOLD}` };
+    //   }
+    // }
 
     return { valid: true };
   };
 
   const handleStartAuction = (playerId: string) => {
+    // Auto-skip if there's currently an active or undecided player
+    if (auction.currentPlayerId && auction.isActive) {
+      const prevPlayer = players.find(p => p.id === auction.currentPlayerId);
+      if (prevPlayer) addLogEntry('SKIP', prevPlayer);
+    }
+
     const player = players.find(p => p.id === playerId);
     if (!player) return;
     handleSetAuction({
       currentPlayerId: playerId,
       currentBid: player.basePrice,
       biddingTeamIds: [],
-      isActive: true
+      isActive: true,
+      lastAction: undefined
     });
+    addLogEntry('START', player, player.basePrice);
   };
 
   const handleIncreaseBid = (teamId: string, customAmount?: number) => {
@@ -188,9 +236,13 @@ const App: React.FC = () => {
       currentBid: nextBid,
       biddingTeamIds: [teamId]
     }));
+    addLogEntry('BID', player, nextBid, teamId);
   };
 
   const handleMatchBid = (teamId: string) => {
+    const player = players.find(p => p.id === auction.currentPlayerId);
+    if (!player) return;
+
     const validation = validateBid(teamId, auction.currentBid);
     if (!validation.valid) {
       alert(validation.error);
@@ -204,6 +256,7 @@ const App: React.FC = () => {
         biddingTeamIds: [teamId, ...otherTeams]
       };
     });
+    addLogEntry('BID', player, auction.currentBid, teamId);
   };
 
   const handleFinalizeSale = () => {
@@ -217,6 +270,7 @@ const App: React.FC = () => {
         handleSetPlayers(prev => prev.map(p =>
           p.id === player.id ? { ...p, status: PlayerStatus.UNSOLD, auctionRound: 2 } : p
         ));
+        addLogEntry('UNSOLD', player);
       } else {
         // Second unsold: check for special transitions
         if (player.category === PlayerCategory.A) {
@@ -232,15 +286,18 @@ const App: React.FC = () => {
             } : p
           ));
           alert(`SYSTEM UPDATE: ${player.name} remains unsold in Round 2. Downgraded to Category B (New Base: ৳${newBase})`);
+          addLogEntry('UNSOLD', player);
         } else if (player.category === PlayerCategory.C) {
           handleSetPlayers(prev => prev.map(p =>
             p.id === player.id ? { ...p, status: PlayerStatus.DISTRIBUTED } : p
           ));
+          addLogEntry('UNSOLD', player);
         } else {
           // Standard Unsold for Cat B
           handleSetPlayers(prev => prev.map(p =>
             p.id === player.id ? { ...p, status: PlayerStatus.UNSOLD } : p
           ));
+          addLogEntry('UNSOLD', player);
         }
       }
     } else {
@@ -251,33 +308,69 @@ const App: React.FC = () => {
       handleSetTeams(prev => prev.map(t =>
         t.id === winnerId ? { ...t, remainingBudget: t.remainingBudget - auction.currentBid } : t
       ));
+      addLogEntry('SOLD', player, auction.currentBid, winnerId);
     }
 
-    handleSetAuction({ currentPlayerId: null, currentBid: 0, biddingTeamIds: [], isActive: false });
+    const action = auction.biddingTeamIds.length > 0 ? 'SOLD' : 'UNSOLD';
+
+    handleSetAuction(prev => ({
+      ...prev,
+      isActive: false,
+      lastAction: action
+    }));
   };
 
   const handleTieLottery = () => {
     if (auction.biddingTeamIds.length < 2) return;
-    const randomIndex = Math.floor(Math.random() * auction.biddingTeamIds.length);
+    const now = Date.now();
+
+    // Fix: Browsers often step time by 2ms-10ms (fractions are dropped), causing
+    // % 4 to bias towards evens (0, 2). We mix the bits to fix this.
+    // XOR the time with itself shifted right by 5 bits.
+    const mixedTime = now ^ (now >>> 5);
+    const randomIndex = (mixedTime >>> 0) % auction.biddingTeamIds.length;
+
     const winnerId = auction.biddingTeamIds[randomIndex];
-    alert(`Lottery Result: ${teams.find(t => t.id === winnerId)?.name} wins the tie!`);
+    const winnerName = teams.find(t => t.id === winnerId)?.name || 'Unknown';
+
+    const teamList = auction.biddingTeamIds.map((id, idx) => ({
+      index: idx,
+      name: teams.find(t => t.id === id)?.name || 'Unknown'
+    }));
+
+    setLotteryResult({
+      winnerId,
+      winnerName,
+      calculation: `(${now} ^ (${now} >>> 5)) % ${auction.biddingTeamIds.length} = ${randomIndex}`,
+      teamList
+    });
+  };
+
+  const handleConfirmLottery = () => {
+    if (!lotteryResult) return;
     handleSetAuction(prev => ({
       ...prev,
-      biddingTeamIds: [winnerId]
+      biddingTeamIds: [lotteryResult.winnerId]
     }));
+    setLotteryResult(null);
   };
 
   const handleSkipForNow = () => {
-    // Only allow skipping if no bids have been placed yet
-    if (auction.biddingTeamIds.length === 0) {
-      handleSetAuction({ currentPlayerId: null, currentBid: 0, biddingTeamIds: [], isActive: false });
-    }
+    const player = players.find(p => p.id === auction.currentPlayerId);
+    if (!player) return;
+
+    handleSetAuction(prev => ({
+      ...prev,
+      isActive: false,
+      lastAction: 'SKIP'
+    }));
+    addLogEntry('SKIP', player);
   };
 
   const addPlayer = (newPlayer: Omit<Player, 'id' | 'status' | 'basePrice'>) => {
     const player: Player = {
       ...newPlayer,
-      id: crypto.randomUUID(),
+      id: generateUUID(),
       status: PlayerStatus.UNSOLD,
       basePrice: CATEGORY_BASE_PRICES[newPlayer.category as PlayerCategory] || 0,
       auctionRound: 1
@@ -314,6 +407,7 @@ const App: React.FC = () => {
           onFinalizeSale={handleFinalizeSale}
           onTieLottery={handleTieLottery}
           onSkipForNow={handleSkipForNow}
+          auctionLog={auctionLog}
         />
       )}
       {activeTab === 'players' && (
@@ -339,6 +433,12 @@ const App: React.FC = () => {
       {activeTab === 'reports' && (
         <Reports players={players} teams={teams} />
       )}
+      <LotteryResultModal
+        isOpen={!!lotteryResult}
+        onClose={() => setLotteryResult(null)}
+        onConfirm={handleConfirmLottery}
+        data={lotteryResult}
+      />
     </Layout>
   );
 };

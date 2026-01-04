@@ -56,12 +56,12 @@ export const Layout: React.FC<LayoutProps> = ({ children, activeTab, setActiveTa
           >
             Players
           </button>
-          <button
+          {/* <button
             onClick={() => setActiveTab('teams')}
             className={`hover:text-blue-200 transition ${activeTab === 'teams' ? 'border-b-2 border-white' : ''}`}
           >
             Teams
-          </button>
+          </button> */}
           <button
             onClick={() => setActiveTab('reports')}
             className={`hover:text-blue-200 transition ${activeTab === 'reports' ? 'border-b-2 border-white' : ''}`}
@@ -82,7 +82,7 @@ export const Layout: React.FC<LayoutProps> = ({ children, activeTab, setActiveTa
         </div>
       </header>
 
-      <main className="flex-1 container mx-auto p-4 md:p-8">
+      <main className="flex-1 w-full p-4 md:p-8">
         {children}
       </main>
 

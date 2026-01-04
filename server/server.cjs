@@ -15,7 +15,7 @@ const io = new Server(server, {
     }
 });
 
-const PORT = 3001;
+const PORT = 7002;
 const DB_FILE = path.join(__dirname, 'db.json');
 
 app.use(cors());
@@ -34,6 +34,7 @@ const INITIAL_DATA = {
         biddingTeamIds: [],
         isActive: false
     },
+    auctionLog: [], // Log of all auction actions
     // role: 'VIEWER' // Default role for state, though role is usually per-user. we won't sync role. // Removed as per instruction
 };
 
@@ -177,7 +178,17 @@ async function saveData() {
 
 // Socket.IO
 io.on('connection', (socket) => {
-    console.log('A user connected');
+    const timestamp = new Date().toLocaleString("en-US", { timeZone: "Asia/Dhaka" });
+    const clientIp = socket.handshake.address;
+    const userAgent = socket.handshake.headers['user-agent'];
+    const activeSessions = io.engine.clientsCount;
+
+    console.log(`[${timestamp}] New Connection Details:
+    - Socket ID: ${socket.id}
+    - Remote IP: ${clientIp}
+    - User Agent: ${userAgent}
+    - Total Active Sessions: ${activeSessions}
+    `);
 
     // Send current state to new client
     socket.emit('init_state', appData);
@@ -188,6 +199,7 @@ io.on('connection', (socket) => {
         if (newData.players) appData.players = newData.players;
         if (newData.teams) appData.teams = newData.teams;
         if (newData.auction) appData.auction = newData.auction;
+        if (newData.auctionLog) appData.auctionLog = newData.auctionLog;
 
         await saveData();
         // Broadcast updates to ALL clients, including sender if needed, or exclude sender
@@ -201,8 +213,15 @@ io.on('connection', (socket) => {
         io.emit('state_update', appData); // Broadcast full state to keep sync
     });
 
-    socket.on('disconnect', () => {
-        console.log('User disconnected');
+    socket.on('disconnect', (reason) => {
+        const timestamp = new Date().toLocaleString("en-US", { timeZone: "Asia/Dhaka" });
+        const activeSessions = io.engine.clientsCount;
+
+        console.log(`[${timestamp}] Disconnection Details:
+        - Socket ID: ${socket.id}
+        - Reason: ${reason}
+        - Remaining Active Sessions: ${activeSessions}
+        `);
     });
 });
 

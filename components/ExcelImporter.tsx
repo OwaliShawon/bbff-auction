@@ -3,6 +3,7 @@ import React, { useRef } from 'react';
 import * as XLSX from 'xlsx';
 import { Player, PlayerStatus, PlayerCategory } from '../types';
 import { CATEGORY_BASE_PRICES } from '../constants';
+import { generateUUID } from '../utils';
 
 interface ExcelImporterProps {
   setPlayers: (players: Player[]) => void;
@@ -29,23 +30,23 @@ export const ExcelImporter: React.FC<ExcelImporterProps> = ({ setPlayers }) => {
           const name = item['Full Name'] || item['Player Name'] || item['Name'] || 'Unknown Player';
           const department = item['Dept Name (Office)'] || item['Department'] || item['Dept'] || 'General';
           const photoId = item['Photo ID'] ? String(item['Photo ID']).trim() : undefined;
-          
+
           // Position mapping: Concatenate Primary and Secondary if both exist
           const primaryPos = item['Primary Playing Position'] || item['Playing Position'] || item['Position'] || '';
           const secondaryPos = item['Secondary Playing Position'] || '';
-          
+
           let finalPosition = String(primaryPos).trim();
           if (secondaryPos && String(secondaryPos).trim()) {
-            finalPosition = finalPosition 
-              ? `${finalPosition} / ${String(secondaryPos).trim()}` 
+            finalPosition = finalPosition
+              ? `${finalPosition} / ${String(secondaryPos).trim()}`
               : String(secondaryPos).trim();
           }
-          
+
           if (!finalPosition) finalPosition = 'All-rounder';
-          
+
           let categoryInput = item['Category (A/B/C)'] || item['Category'] || item['Tier'] || 'C';
           let categoryValue: PlayerCategory = PlayerCategory.C;
-          
+
           if (typeof categoryInput === 'string') {
             const normalized = categoryInput.toUpperCase().trim();
             if (normalized.includes('A')) categoryValue = PlayerCategory.A;
@@ -54,7 +55,7 @@ export const ExcelImporter: React.FC<ExcelImporterProps> = ({ setPlayers }) => {
           }
 
           return {
-            id: crypto.randomUUID(),
+            id: generateUUID(),
             photoId,
             name: String(name).trim(),
             department: String(department).trim(),
@@ -85,7 +86,7 @@ export const ExcelImporter: React.FC<ExcelImporterProps> = ({ setPlayers }) => {
 
   return (
     <div className="relative">
-      <button 
+      <button
         onClick={() => fileInputRef.current?.click()}
         className="bg-green-600 text-white px-4 py-2 rounded-lg font-bold hover:bg-green-700 transition shadow flex items-center"
       >
@@ -94,12 +95,12 @@ export const ExcelImporter: React.FC<ExcelImporterProps> = ({ setPlayers }) => {
         </svg>
         Import Players
       </button>
-      <input 
-        type="file" 
-        ref={fileInputRef} 
-        onChange={handleFileUpload} 
-        accept=".xlsx, .xls" 
-        className="hidden" 
+      <input
+        type="file"
+        ref={fileInputRef}
+        onChange={handleFileUpload}
+        accept=".xlsx, .xls"
+        className="hidden"
       />
     </div>
   );

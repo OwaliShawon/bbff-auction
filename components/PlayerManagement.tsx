@@ -59,8 +59,8 @@ const resizeImage = (file: File, maxWidth: number, maxHeight: number): Promise<s
   });
 };
 
-export const PlayerManagement: React.FC<PlayerManagementProps> = ({ 
-  players, onAddPlayer, onUpdatePlayer, onUpdatePhoto, setPlayers, onClearAll, role 
+export const PlayerManagement: React.FC<PlayerManagementProps> = ({
+  players, onAddPlayer, onUpdatePlayer, onUpdatePhoto, setPlayers, onClearAll, role
 }) => {
   const [showForm, setShowForm] = useState(false);
   const [isProcessingPhotos, setIsProcessingPhotos] = useState(false);
@@ -74,11 +74,17 @@ export const PlayerManagement: React.FC<PlayerManagementProps> = ({
     category: PlayerCategory.A as PlayerCategory
   });
 
+  // Filter States
+  const [filterName, setFilterName] = useState('');
+  const [filterPosition, setFilterPosition] = useState('');
+  const [filterCategory, setFilterCategory] = useState<string>('All');
+  const [filterStatus, setFilterStatus] = useState<string>('All');
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.name || !formData.department || !formData.primaryPosition) return;
-    
-    const combinedPosition = formData.secondaryPosition.trim() 
+
+    const combinedPosition = formData.secondaryPosition.trim()
       ? `${formData.primaryPosition.trim()} / ${formData.secondaryPosition.trim()}`
       : formData.primaryPosition.trim();
 
@@ -100,7 +106,7 @@ export const PlayerManagement: React.FC<PlayerManagementProps> = ({
     } else {
       onAddPlayer(submissionData);
     }
-    
+
     resetForm();
   };
 
@@ -147,14 +153,14 @@ export const PlayerManagement: React.FC<PlayerManagementProps> = ({
     try {
       for (let i = 0; i < files.length; i++) {
         const file = files[i];
-        
-        const isImage = file.type.startsWith('image/') || 
-                       /\.(jpg|jpeg|png|webp|avif)$/i.test(file.name);
+
+        const isImage = file.type.startsWith('image/') ||
+          /\.(jpg|jpeg|png|webp|avif)$/i.test(file.name);
         if (!isImage) continue;
 
         const fileNameWithExt = file.name;
         const fileName = fileNameWithExt.substring(0, fileNameWithExt.lastIndexOf('.')).trim();
-        
+
         const matchingIndices = newPlayers.reduce((acc: number[], p, idx) => {
           if (p.photoId && String(p.photoId).toLowerCase().trim() === fileName.toLowerCase()) {
             acc.push(idx);
@@ -192,26 +198,41 @@ export const PlayerManagement: React.FC<PlayerManagementProps> = ({
     }
   };
 
+  const filteredPlayers = players.filter(player => {
+    // Name Filter
+    if (filterName && !player.name.toLowerCase().includes(filterName.toLowerCase())) return false;
+
+    // Position Filter
+    if (filterPosition && !player.position.toLowerCase().includes(filterPosition.toLowerCase())) return false;
+
+    // Category Filter
+    if (filterCategory !== 'All' && player.category !== filterCategory) return false;
+
+    // Status Filter
+    if (filterStatus !== 'All' && player.status !== filterStatus) return false;
+
+    return true;
+  });
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-        <div>
-          <h2 className="text-2xl font-bold text-slate-800">Player Pool Management</h2>
-          <p className="text-xs text-slate-500 font-medium">Manage your roster and sync photos using Excel Photo IDs.</p>
-        </div>
+        {/* <div>
+          <h2 className="text-2xl font-bold text-slate-800">Player Pool</h2>
+        </div> */}
         {role === UserRole.ADMIN && (
           <div className="flex flex-wrap gap-3">
-            <button 
+            {/* <button
               onClick={onClearAll}
               className="bg-red-50 text-red-600 border border-red-200 px-4 py-2 rounded-lg font-bold hover:bg-red-100 transition shadow-sm text-sm"
             >
               Clear All Data
             </button>
             <ExcelImporter setPlayers={setPlayers} />
-            
+
             {players.length > 0 && (
               <div className="relative">
-                <button 
+                <button
                   onClick={() => folderInputRef.current?.click()}
                   disabled={isProcessingPhotos}
                   className={`bg-blue-600 text-white px-4 py-2 rounded-lg font-bold hover:bg-blue-700 transition shadow flex items-center text-sm ${isProcessingPhotos ? 'opacity-50 cursor-wait' : ''}`}
@@ -219,19 +240,19 @@ export const PlayerManagement: React.FC<PlayerManagementProps> = ({
                   <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
                   {isProcessingPhotos ? 'Syncing...' : 'Upload Photo Folder'}
                 </button>
-                <input 
-                  type="file" 
-                  ref={folderInputRef} 
-                  onChange={handleBulkPhotoUpload} 
+                <input
+                  type="file"
+                  ref={folderInputRef}
+                  onChange={handleBulkPhotoUpload}
                   multiple
                   //@ts-ignore
                   webkitdirectory="true"
-                  className="hidden" 
+                  className="hidden"
                 />
               </div>
-            )}
+            )} */}
 
-            <button 
+            <button
               onClick={() => setShowForm(true)}
               className="bg-therap text-white px-4 py-2 rounded-lg font-bold hover:bg-blue-800 transition shadow text-sm"
             >
@@ -248,20 +269,20 @@ export const PlayerManagement: React.FC<PlayerManagementProps> = ({
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
                 <label className="block text-sm font-bold text-slate-700">Full Name</label>
-                <input 
-                  className="w-full border p-2 rounded mt-1 outline-therap" 
-                  value={formData.name} 
-                  onChange={e => setFormData({...formData, name: e.target.value})} 
+                <input
+                  className="w-full border p-2 rounded mt-1 outline-therap"
+                  value={formData.name}
+                  onChange={e => setFormData({ ...formData, name: e.target.value })}
                   placeholder="e.g. Mamoor"
                   required
                 />
               </div>
               <div>
                 <label className="block text-sm font-bold text-slate-700">Dept Name (Office)</label>
-                <input 
-                  className="w-full border p-2 rounded mt-1 outline-therap" 
-                  value={formData.department} 
-                  onChange={e => setFormData({...formData, department: e.target.value})} 
+                <input
+                  className="w-full border p-2 rounded mt-1 outline-therap"
+                  value={formData.department}
+                  onChange={e => setFormData({ ...formData, department: e.target.value })}
                   placeholder="e.g. System Team"
                   required
                 />
@@ -269,30 +290,30 @@ export const PlayerManagement: React.FC<PlayerManagementProps> = ({
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-bold text-slate-700">Primary Position</label>
-                  <input 
-                    className="w-full border p-2 rounded mt-1 outline-therap" 
-                    value={formData.primaryPosition} 
-                    onChange={e => setFormData({...formData, primaryPosition: e.target.value})} 
+                  <input
+                    className="w-full border p-2 rounded mt-1 outline-therap"
+                    value={formData.primaryPosition}
+                    onChange={e => setFormData({ ...formData, primaryPosition: e.target.value })}
                     placeholder="e.g. Attack"
                     required
                   />
                 </div>
                 <div>
                   <label className="block text-sm font-bold text-slate-700">Secondary Position</label>
-                  <input 
-                    className="w-full border p-2 rounded mt-1 outline-therap" 
-                    value={formData.secondaryPosition} 
-                    onChange={e => setFormData({...formData, secondaryPosition: e.target.value})} 
+                  <input
+                    className="w-full border p-2 rounded mt-1 outline-therap"
+                    value={formData.secondaryPosition}
+                    onChange={e => setFormData({ ...formData, secondaryPosition: e.target.value })}
                     placeholder="e.g. Midfield"
                   />
                 </div>
               </div>
               <div>
                 <label className="block text-sm font-bold text-slate-700">Category (A/B/C)</label>
-                <select 
-                  className="w-full border p-2 rounded mt-1 outline-therap" 
-                  value={formData.category} 
-                  onChange={e => setFormData({...formData, category: e.target.value as PlayerCategory})}
+                <select
+                  className="w-full border p-2 rounded mt-1 outline-therap"
+                  value={formData.category}
+                  onChange={e => setFormData({ ...formData, category: e.target.value as PlayerCategory })}
                 >
                   <option value={PlayerCategory.A}>Category A (Base 15,000)</option>
                   <option value={PlayerCategory.B}>Category B (Base 8,000)</option>
@@ -303,9 +324,9 @@ export const PlayerManagement: React.FC<PlayerManagementProps> = ({
                 <button type="submit" className="flex-1 bg-therap text-white py-2 rounded font-bold">
                   {editPlayerId ? 'Update Info' : 'Save Player'}
                 </button>
-                <button 
-                  type="button" 
-                  onClick={resetForm} 
+                <button
+                  type="button"
+                  onClick={resetForm}
                   className="flex-1 bg-slate-100 text-slate-600 py-2 rounded font-bold"
                 >
                   Cancel
@@ -316,8 +337,72 @@ export const PlayerManagement: React.FC<PlayerManagementProps> = ({
         </div>
       )}
 
+      {/* Filter Section */}
+      <div className="bg-white p-4 rounded-xl shadow-sm border border-slate-200">
+        <div className="flex flex-col md:flex-row gap-4">
+          <div className="flex-1">
+            <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Search Name</label>
+            <input
+              type="text"
+              placeholder="Search by name..."
+              className="w-full border p-2 rounded outline-therap text-sm"
+              value={filterName}
+              onChange={e => setFilterName(e.target.value)}
+            />
+          </div>
+          <div className="flex-1">
+            <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Search Position</label>
+            <input
+              type="text"
+              placeholder="Primary or Secondary..."
+              className="w-full border p-2 rounded outline-therap text-sm"
+              value={filterPosition}
+              onChange={e => setFilterPosition(e.target.value)}
+            />
+          </div>
+          <div className="w-full md:w-40">
+            <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Category</label>
+            <select
+              className="w-full border p-2 rounded outline-therap text-sm"
+              value={filterCategory}
+              onChange={e => setFilterCategory(e.target.value)}
+            >
+              <option value="All">All Categories</option>
+              <option value={PlayerCategory.A}>Category A</option>
+              <option value={PlayerCategory.B}>Category B</option>
+              <option value={PlayerCategory.C}>Category C</option>
+            </select>
+          </div>
+          <div className="w-full md:w-40">
+            <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Status</label>
+            <select
+              className="w-full border p-2 rounded outline-therap text-sm"
+              value={filterStatus}
+              onChange={e => setFilterStatus(e.target.value)}
+            >
+              <option value="All">All Statuses</option>
+              <option value={PlayerStatus.SOLD}>Sold</option>
+              <option value={PlayerStatus.UNSOLD}>Unsold</option>
+            </select>
+          </div>
+          <div className="flex items-end">
+            <button
+              onClick={() => {
+                setFilterName('');
+                setFilterPosition('');
+                setFilterCategory('All');
+                setFilterStatus('All');
+              }}
+              className="px-4 py-2 bg-slate-100 text-slate-600 rounded hover:bg-slate-200 text-sm font-bold transition"
+            >
+              Reset
+            </button>
+          </div>
+        </div>
+      </div>
+
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-        {players.map(player => (
+        {filteredPlayers.map(player => (
           <div key={player.id} className="bg-white rounded-xl shadow border border-slate-200 overflow-hidden flex flex-col h-full hover:shadow-lg transition">
             <div className="h-56 bg-slate-100 relative group overflow-hidden">
               {player.photoUrl ? (
@@ -330,19 +415,19 @@ export const PlayerManagement: React.FC<PlayerManagementProps> = ({
                   </p>
                 </div>
               )}
-              
+
               {role === UserRole.ADMIN && (
                 <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition flex items-center justify-center gap-2 p-4">
                   <label className="cursor-pointer bg-white text-therap px-3 py-2 rounded-lg font-bold shadow text-xs">
                     Upload Photo
-                    <input 
-                      type="file" 
-                      accept="image/png, image/jpeg, image/jpg, image/webp" 
-                      className="hidden" 
-                      onChange={(e) => handlePhotoChange(player.id, e)} 
+                    <input
+                      type="file"
+                      accept="image/png, image/jpeg, image/jpg, image/webp"
+                      className="hidden"
+                      onChange={(e) => handlePhotoChange(player.id, e)}
                     />
                   </label>
-                  <button 
+                  <button
                     onClick={() => startEdit(player)}
                     className="bg-therap text-white px-3 py-2 rounded-lg font-bold shadow text-xs"
                   >
@@ -367,7 +452,7 @@ export const PlayerManagement: React.FC<PlayerManagementProps> = ({
                 <p className="text-sm text-slate-500 font-medium">{player.position}</p>
                 <p className="text-[10px] text-slate-400 font-bold uppercase mt-1">{player.department}</p>
               </div>
-              
+
               <div className="mt-auto space-y-2">
                 <div className="flex justify-between text-xs py-1.5 border-t border-slate-50">
                   <span className="text-slate-400 font-bold uppercase tracking-tighter">Base Price</span>
@@ -383,11 +468,27 @@ export const PlayerManagement: React.FC<PlayerManagementProps> = ({
             </div>
           </div>
         ))}
-        {players.length === 0 && (
+        {players.length === 0 ? (
           <div className="col-span-full py-20 bg-slate-50 border-2 border-dashed border-slate-200 rounded-2xl flex flex-col items-center justify-center text-slate-400">
-             <svg className="w-16 h-16 mb-4 opacity-20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
-             <p className="text-lg font-medium">No players in the pool yet</p>
-             <p className="text-sm">Import via Excel to begin. Make sure your Excel has a "Photo ID" column.</p>
+            <svg className="w-16 h-16 mb-4 opacity-20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
+            <p className="text-lg font-medium">No players in the pool yet</p>
+            <p className="text-sm">Import via Excel to begin. Make sure your Excel has a "Photo ID" column.</p>
+          </div>
+        ) : filteredPlayers.length === 0 && (
+          <div className="col-span-full py-20 bg-slate-50 border-2 border-dashed border-slate-200 rounded-2xl flex flex-col items-center justify-center text-slate-400">
+            <svg className="w-16 h-16 mb-4 opacity-20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+            <p className="text-lg font-medium">No players match your filters</p>
+            <button
+              onClick={() => {
+                setFilterName('');
+                setFilterPosition('');
+                setFilterCategory('All');
+                setFilterStatus('All');
+              }}
+              className="mt-2 text-therap font-bold hover:underline"
+            >
+              Clear filters
+            </button>
           </div>
         )}
       </div>

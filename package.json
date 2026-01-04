@@ -5,11 +5,15 @@
   "type": "module",
   "scripts": {
     "dev": "concurrently \"node server/server.cjs\" \"vite\"",
+    "dev:7001": "vite --port 7001",
+    "dev:dual": "concurrently \"node server/server.cjs\" \"vite --port 3000\" \"vite --port 7001\"",
     "build": "vite build",
     "preview": "vite preview"
   },
   "dependencies": {
+    "@types/canvas-confetti": "^1.9.0",
     "body-parser": "^2.2.1",
+    "canvas-confetti": "^1.9.4",
     "concurrently": "^9.2.1",
     "cors": "^2.8.5",
     "express": "^5.2.1",

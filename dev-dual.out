@@ -1,0 +1,178 @@
+
+> final-v4---therap-football-tournament-auction-webapp@0.0.0 dev:dual
+> concurrently "node server/server.cjs" "vite --port 3000" "vite --port 7001"
+
+[1] 
+[1]   VITE v6.4.1  ready in 62 ms
+[1] 
+[1]   ➜  Local:   http://localhost:3000/
+[1]   ➜  Network: http://172.18.0.1:3000/
+[1]   ➜  Network: http://192.168.0.164:3000/
+[2] 
+[2]   VITE v6.4.1  ready in 62 ms
+[2] 
+[2]   ➜  Local:   http://localhost:7001/
+[2]   ➜  Network: http://172.18.0.1:7001/
+[2]   ➜  Network: http://192.168.0.164:7001/
+[0] Data loaded from disk
+[0] Server running on port 7002
+[0] [1/6/2026, 9:59:04 AM] New Connection Details:
+[0]     - Socket ID: -LFniSo_bQjIPZRfAAAC
+[0]     - Remote IP: 192.168.2.140
+[0]     - User Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36
+[0]     - Total Active Sessions: 2
+[0]     
+[0] [1/6/2026, 9:59:04 AM] New Connection Details:
+[0]     - Socket ID: t5vwaYJSSKuES1LsAAAE
+[0]     - Remote IP: 10.11.2.131
+[0]     - User Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36
+[0]     - Total Active Sessions: 3
+[0]     
+[0] [1/6/2026, 9:59:05 AM] New Connection Details:
+[0]     - Socket ID: InLGmdJaFV8FFu2wAAAG
+[0]     - Remote IP: 192.168.2.140
+[0]     - User Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36
+[0]     - Total Active Sessions: 4
+[0]     
+[0] [1/6/2026, 9:59:05 AM] New Connection Details:
+[0]     - Socket ID: 4Flj6K2mP6eqoNNhAAAH
+[0]     - Remote IP: 192.168.2.72
+[0]     - User Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36
+[0]     - Total Active Sessions: 4
+[0]     
+[0] [1/6/2026, 9:59:05 AM] New Connection Details:
+[0]     - Socket ID: SambQNPjjtK6XQuzAAAK
+[0]     - Remote IP: 192.168.0.102
+[0]     - User Agent: Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36
+[0]     - Total Active Sessions: 6
+[0]     
+[0] [1/6/2026, 9:59:05 AM] New Connection Details:
+[0]     - Socket ID: sv2DJ6jp8w6sxJXFAAAN
+[0]     - Remote IP: 192.168.0.147
+[0]     - User Agent: Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36
+[0]     - Total Active Sessions: 8
+[0]     
+[0] [1/6/2026, 9:59:05 AM] New Connection Details:
+[0]     - Socket ID: c9yWthDQVZJoxhygAAAQ
+[0]     - Remote IP: 192.168.0.164
+[0]     - User Agent: Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36
+[0]     - Total Active Sessions: 10
+[0]     
+[0] [1/6/2026, 9:59:05 AM] New Connection Details:
+[0]     - Socket ID: eGYCVGE41nDRZihbAAAT
+[0]     - Remote IP: 10.11.0.138
+[0]     - User Agent: Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36
+[0]     - Total Active Sessions: 12
+[0]     
+[0] [1/6/2026, 9:59:05 AM] New Connection Details:
+[0]     - Socket ID: VvX-GqlIJks8_ByvAAAW
+[0]     - Remote IP: 192.168.0.68
+[0]     - User Agent: Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:146.0) Gecko/20100101 Firefox/146.0
+[0]     - Total Active Sessions: 14
+[0]     
+[0] [1/6/2026, 9:59:06 AM] New Connection Details:
+[0]     - Socket ID: FIk7H_sx9RDdubr3AAAZ
+[0]     - Remote IP: 10.11.0.135
+[0]     - User Agent: Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36
+[0]     - Total Active Sessions: 16
+[0]     
+[0] [1/6/2026, 9:59:06 AM] New Connection Details:
+[0]     - Socket ID: K8b39Pyswzq3R19gAAAc
+[0]     - Remote IP: 192.168.0.76
+[0]     - User Agent: Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36
+[0]     - Total Active Sessions: 18
+[0]     
+[0] [1/6/2026, 9:59:06 AM] New Connection Details:
+[0]     - Socket ID: bk6YfvGuO6kIo26nAAAd
+[0]     - Remote IP: 192.168.0.76
+[0]     - User Agent: Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36
+[0]     - Total Active Sessions: 18
+[0]     
+[0] [1/6/2026, 9:59:07 AM] New Connection Details:
+[0]     - Socket ID: hGyuxhEVf4LbK46bAAAf
+[0]     - Remote IP: 192.168.0.164
+[0]     - User Agent: Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36
+[0]     - Total Active Sessions: 19
+[0]     
+[0] [1/6/2026, 9:59:07 AM] New Connection Details:
+[0]     - Socket ID: kqtdyOR32PwkjWtxAAAh
+[0]     - Remote IP: 192.168.0.50
+[0]     - User Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36
+[0]     - Total Active Sessions: 20
+[0]     
+[0] [1/6/2026, 9:59:07 AM] New Connection Details:
+[0]     - Socket ID: ByTE6Y0e_4pfUTAoAAAj
+[0]     - Remote IP: 192.168.0.71
+[0]     - User Agent: Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36
+[0]     - Total Active Sessions: 21
+[0]     
+[0] [1/6/2026, 9:59:07 AM] New Connection Details:
+[0]     - Socket ID: d58ur65GCBh2XVdSAAAl
+[0]     - Remote IP: 192.168.0.76
+[0]     - User Agent: Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36
+[0]     - Total Active Sessions: 22
+[0]     
+[0] [1/6/2026, 10:41:16 AM] Disconnection Details:
+[0]         - Socket ID: eGYCVGE41nDRZihbAAAT
+[0]         - Reason: transport close
+[0]         - Remaining Active Sessions: 15
+[0]         
+[0] [1/6/2026, 10:46:42 AM] Disconnection Details:
+[0]         - Socket ID: FIk7H_sx9RDdubr3AAAZ
+[0]         - Reason: transport close
+[0]         - Remaining Active Sessions: 14
+[0]         
+[0] [1/6/2026, 11:00:06 AM] Disconnection Details:
+[0]         - Socket ID: t5vwaYJSSKuES1LsAAAE
+[0]         - Reason: transport close
+[0]         - Remaining Active Sessions: 13
+[0]         
+[0] [1/6/2026, 11:18:19 AM] New Connection Details:
+[0]     - Socket ID: 7zWOgHfYwN9UKn28AAAo
+[0]     - Remote IP: 192.168.2.144
+[0]     - User Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36
+[0]     - Total Active Sessions: 15
+[0]     
+[0] [1/6/2026, 11:24:27 AM] Disconnection Details:
+[0]         - Socket ID: 7zWOgHfYwN9UKn28AAAo
+[0]         - Reason: transport close
+[0]         - Remaining Active Sessions: 13
+[0]         
+[0] [1/6/2026, 11:51:00 AM] New Connection Details:
+[0]     - Socket ID: HH3gm-mkApqq1JTUAAAr
+[0]     - Remote IP: 10.11.0.138
+[0]     - User Agent: Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36
+[0]     - Total Active Sessions: 15
+[0]     
+[0] [1/6/2026, 11:54:27 AM] Disconnection Details:
+[0]         - Socket ID: HH3gm-mkApqq1JTUAAAr
+[0]         - Reason: transport close
+[0]         - Remaining Active Sessions: 13
+[0]         
+[0] [1/6/2026, 4:25:45 PM] New Connection Details:
+[0]     - Socket ID: I3XowZnuyV5DUiIeAAAu
+[0]     - Remote IP: 10.11.2.121
+[0]     - User Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36
+[0]     - Total Active Sessions: 15
+[0]     
+[0] [1/6/2026, 5:10:47 PM] Disconnection Details:
+[0]         - Socket ID: I3XowZnuyV5DUiIeAAAu
+[0]         - Reason: transport close
+[0]         - Remaining Active Sessions: 13
+[0]         
+[0] [1/7/2026, 8:01:19 AM] Disconnection Details:
+[0]         - Socket ID: VvX-GqlIJks8_ByvAAAW
+[0]         - Reason: transport close
+[0]         - Remaining Active Sessions: 12
+[0]         
+[0] [1/7/2026, 8:09:19 AM] Disconnection Details:
+[0]         - Socket ID: sv2DJ6jp8w6sxJXFAAAN
+[0]         - Reason: transport close
+[0]         - Remaining Active Sessions: 11
+[0]         
+[0] [1/7/2026, 8:09:19 AM] New Connection Details:
+[0]     - Socket ID: dob-lUaM2q_AUUNyAAAx
+[0]     - Remote IP: 192.168.0.147
+[0]     - User Agent: Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36
+[0]     - Total Active Sessions: 13
+[0]     

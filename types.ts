@@ -42,6 +42,7 @@ export interface AuctionState {
   currentBid: number;
   biddingTeamIds: string[];
   isActive: boolean;
+  lastAction?: 'SOLD' | 'UNSOLD' | 'SKIP';
 }
 
 export enum UserRole {
@@ -49,9 +50,24 @@ export enum UserRole {
   VIEWER = 'VIEWER'
 }
 
+export type AuctionLogAction = 'START' | 'BID' | 'SOLD' | 'UNSOLD' | 'SKIP';
+
+export interface AuctionLogEntry {
+  id: string; // uuid
+  timestamp: number;
+  action: AuctionLogAction;
+  playerId: string;
+  playerName: string;
+  playerCategory: PlayerCategory;
+  amount?: number;
+  teamId?: string; // For BID, SOLD
+  teamName?: string; // For BID, SOLD
+}
+
 export interface AppData {
   players: Player[];
   teams: Team[];
   auction: AuctionState;
   role: UserRole;
+  auctionLog: AuctionLogEntry[];
 }
