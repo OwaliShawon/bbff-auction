@@ -39,8 +39,8 @@ export const Layout: React.FC<LayoutProps> = ({ children, activeTab, setActiveTa
     <div className="min-h-screen flex flex-col relative">
       <header className="bg-therap text-white shadow-lg p-4 flex justify-between items-center sticky top-0 z-50">
         <div className="flex items-center space-x-3">
-          <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center text-therap font-bold">T</div>
-          <h1 className="text-xl font-bold tracking-tight">Therap Football Auction</h1>
+          <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center text-therap font-bold">I</div>
+          <h1 className="text-xl font-bold tracking-tight">Intra BBFF League Auction</h1>
         </div>
 
         <nav className="hidden md:flex space-x-6 font-medium">
@@ -87,7 +87,7 @@ export const Layout: React.FC<LayoutProps> = ({ children, activeTab, setActiveTa
       </main>
 
       <footer className="bg-slate-100 p-4 text-center text-slate-500 text-xs border-t">
-        &copy; {new Date().getFullYear()} Therap Football Tournament. All Rights Reserved.
+        &copy; {new Date().getFullYear()} Intra BBFF League. All Rights Reserved.
       </footer>
 
       {/* PIN Modal */}

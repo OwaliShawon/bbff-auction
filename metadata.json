@@ -1,6 +1,6 @@
 {
-  "name": "Final V4 - Therap Football Tournament Auction WebApp",
-  "description": "A comprehensive player auction system for football tournaments, featuring Excel import/export, real-time bidding, team budget management, and secure admin controls.",
+  "name": "Intra BBFF League Auction",
+  "description": "A comprehensive player auction system for the Intra BBFF League, featuring Excel import/export, real-time bidding, team budget management, and secure admin controls.",
   "requestFramePermissions": [
     "camera"
   ]
