@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { UserRole } from '../types';
+import { Team, UserRole } from '../types';
 import { ADMIN_PIN } from '../constants';
 
 interface LayoutProps {
@@ -9,12 +9,18 @@ interface LayoutProps {
   setActiveTab: (tab: any) => void;
   role: UserRole;
   setRole: (role: UserRole) => void;
+  currentTeam: Team | null;
+  onTeamLogin: (pin: string) => Team | null;
+  onTeamLogout: () => void;
 }
 
-export const Layout: React.FC<LayoutProps> = ({ children, activeTab, setActiveTab, role, setRole }) => {
+export const Layout: React.FC<LayoutProps> = ({ children, activeTab, setActiveTab, role, setRole, currentTeam, onTeamLogin, onTeamLogout }) => {
   const [isPinModalOpen, setIsPinModalOpen] = useState(false);
+  const [isTeamLoginOpen, setIsTeamLoginOpen] = useState(false);
   const [pin, setPin] = useState('');
+  const [teamPin, setTeamPin] = useState('');
   const [error, setError] = useState('');
+  const [teamError, setTeamError] = useState('');
 
   const handleRoleChange = (selectedRole: UserRole) => {
     if (selectedRole === UserRole.ADMIN) {
@@ -32,6 +38,17 @@ export const Layout: React.FC<LayoutProps> = ({ children, activeTab, setActiveTa
       setIsPinModalOpen(false);
     } else {
       setError('Incorrect PIN');
+    }
+  };
+
+  const handleTeamLoginSubmit = () => {
+    const team = onTeamLogin(teamPin);
+    if (team) {
+      setTeamError('');
+      setTeamPin('');
+      setIsTeamLoginOpen(false);
+    } else {
+      setTeamError('Invalid team PIN');
     }
   };
 
@@ -56,12 +73,12 @@ export const Layout: React.FC<LayoutProps> = ({ children, activeTab, setActiveTa
           >
             Players
           </button>
-          {/* <button
+          <button
             onClick={() => setActiveTab('teams')}
             className={`hover:text-blue-200 transition ${activeTab === 'teams' ? 'border-b-2 border-white' : ''}`}
           >
             Teams
-          </button> */}
+          </button>
           <button
             onClick={() => setActiveTab('reports')}
             className={`hover:text-blue-200 transition ${activeTab === 'reports' ? 'border-b-2 border-white' : ''}`}
@@ -71,6 +88,18 @@ export const Layout: React.FC<LayoutProps> = ({ children, activeTab, setActiveTa
         </nav>
 
         <div className="flex items-center space-x-4">
+          {currentTeam && (
+            <div className="hidden sm:flex items-center gap-2 bg-white/10 rounded-full px-3 py-1 text-sm font-semibold">
+              <span>{currentTeam.name}</span>
+              <button onClick={onTeamLogout} className="text-xs uppercase tracking-wider text-blue-100 hover:text-white">Logout</button>
+            </div>
+          )}
+          <button
+            onClick={() => setIsTeamLoginOpen(true)}
+            className="bg-white/10 hover:bg-white/20 text-sm border border-white/20 rounded px-3 py-1 outline-none transition"
+          >
+            Team Login
+          </button>
           <select
             value={role}
             onChange={(e) => handleRoleChange(e.target.value as UserRole)}
@@ -121,6 +150,42 @@ export const Layout: React.FC<LayoutProps> = ({ children, activeTab, setActiveTa
                 className="px-4 py-2 bg-therap text-white rounded hover:bg-blue-700 transition shadow-md"
               >
                 Verify
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {isTeamLoginOpen && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-[60] flex items-center justify-center p-4">
+          <div className="bg-white rounded-lg shadow-2xl p-6 w-full max-w-sm transform transition-all scale-100">
+            <h3 className="text-lg font-bold text-gray-800 mb-4">Team Login</h3>
+            <p className="text-sm text-gray-600 mb-4">Enter your team PIN to start bidding for your manager.</p>
+
+            <input
+              type="password"
+              value={teamPin}
+              onChange={(e) => setTeamPin(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && handleTeamLoginSubmit()}
+              className="w-full border border-gray-300 rounded px-3 py-2 text-lg mb-2 focus:ring-2 focus:ring-therap focus:border-therap outline-none"
+              placeholder="Enter team PIN"
+              autoFocus
+            />
+
+            {teamError && <p className="text-red-500 text-sm mb-4">{teamError}</p>}
+
+            <div className="flex justify-end space-x-3 mt-4">
+              <button
+                onClick={() => setIsTeamLoginOpen(false)}
+                className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded transition"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleTeamLoginSubmit}
+                className="px-4 py-2 bg-therap text-white rounded hover:bg-blue-700 transition shadow-md"
+              >
+                Login
               </button>
             </div>
           </div>

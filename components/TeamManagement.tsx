@@ -53,9 +53,11 @@ const resizeImage = (file: File, maxWidth: number, maxHeight: number): Promise<s
   });
 };
 
+const generateTeamPin = () => Math.floor(1000 + Math.random() * 9000).toString();
+
 export const TeamManagement: React.FC<TeamManagementProps> = ({ teams, setTeams, role, onUpdateLogo, onClearAll }) => {
   const [showForm, setShowForm] = useState(false);
-  const [newTeam, setNewTeam] = useState({ name: '', manager: '', initialBudget: DEFAULT_TEAM_BUDGET });
+  const [newTeam, setNewTeam] = useState({ name: '', manager: '', pin: '', initialBudget: DEFAULT_TEAM_BUDGET });
   const excelInputRef = useRef<HTMLInputElement>(null);
 
   const handleAddTeam = (e: React.FormEvent) => {
@@ -63,10 +65,11 @@ export const TeamManagement: React.FC<TeamManagementProps> = ({ teams, setTeams,
     const team: Team = {
       ...newTeam,
       id: generateUUID(),
+      pin: newTeam.pin.trim() || generateTeamPin(),
       remainingBudget: newTeam.initialBudget
     };
     setTeams([...teams, team]);
-    setNewTeam({ name: '', manager: '', initialBudget: DEFAULT_TEAM_BUDGET });
+    setNewTeam({ name: '', manager: '', pin: '', initialBudget: DEFAULT_TEAM_BUDGET });
     setShowForm(false);
   };
 
@@ -98,12 +101,14 @@ export const TeamManagement: React.FC<TeamManagementProps> = ({ teams, setTeams,
         const importedTeams: Team[] = data.map(item => {
           const name = item['Team Name'] || item['Name'] || 'New Team';
           const manager = item['Team Manager'] || item['Manager Name'] || item['Manager'] || item['Owner Name'] || item['Owner'] || item['Dept'] || item['Department'] || 'Unknown Manager';
+          const pin = String(item['Team PIN'] || item['PIN'] || item['Passcode'] || generateTeamPin()).trim();
           const budget = Number(item['Initial Budget'] || item['Starting Budget'] || item['Budget'] || DEFAULT_TEAM_BUDGET);
 
           return {
             id: generateUUID(),
             name: String(name).trim(),
             manager: String(manager).trim(),
+            pin,
             initialBudget: isNaN(budget) ? DEFAULT_TEAM_BUDGET : budget,
             remainingBudget: isNaN(budget) ? DEFAULT_TEAM_BUDGET : budget
           };
@@ -169,6 +174,9 @@ export const TeamManagement: React.FC<TeamManagementProps> = ({ teams, setTeams,
                 <div className="flex-1">
                   <h3 className="text-xl font-extrabold text-slate-800 uppercase tracking-tight truncate">{team.name}</h3>
                   <p className="text-slate-500 text-sm font-medium">{team.manager}</p>
+                  {role === UserRole.ADMIN && (
+                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-2">PIN: {team.pin}</p>
+                  )}
                 </div>
                 <div className="relative w-16 h-16 bg-slate-50 border border-slate-100 rounded-xl overflow-hidden flex items-center justify-center shrink-0 ml-4 group">
                   {team.logoUrl ? (
@@ -236,6 +244,15 @@ export const TeamManagement: React.FC<TeamManagementProps> = ({ teams, setTeams,
                   value={newTeam.manager}
                   onChange={e => setNewTeam({ ...newTeam, manager: e.target.value })}
                   required
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-700">Team PIN</label>
+                <input
+                  className="w-full border p-2 rounded mt-1"
+                  value={newTeam.pin}
+                  onChange={e => setNewTeam({ ...newTeam, pin: e.target.value })}
+                  placeholder="Leave blank to auto-generate"
                 />
               </div>
               <div>

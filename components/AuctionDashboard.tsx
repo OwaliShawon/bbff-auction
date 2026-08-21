@@ -9,6 +9,7 @@ interface AuctionDashboardProps {
   teams: Team[];
   auction: AuctionState;
   role: UserRole;
+  currentTeam: Team | null;
   onStartAuction: (id: string) => void;
   onIncreaseBid: (teamId: string, amount?: number) => void;
   onMatchBid: (teamId: string) => void;
@@ -19,7 +20,7 @@ interface AuctionDashboardProps {
 }
 
 export const AuctionDashboard: React.FC<AuctionDashboardProps> = ({
-  players, teams, auction, role, onStartAuction, onIncreaseBid, onMatchBid, onFinalizeSale, onTieLottery, onSkipForNow, auctionLog
+  players, teams, auction, role, currentTeam, onStartAuction, onIncreaseBid, onMatchBid, onFinalizeSale, onTieLottery, onSkipForNow, auctionLog
 }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [filterCategory, setFilterCategory] = useState<'ALL' | PlayerCategory>('ALL');
@@ -257,6 +258,53 @@ export const AuctionDashboard: React.FC<AuctionDashboardProps> = ({
                         <span>for <span className="text-therap font-black text-3xl">৳{auction.currentBid}</span></span>
                       </div>
                     )}
+                  </div>
+                )}
+
+                {currentPlayer && role !== UserRole.ADMIN && currentTeam && auction.isActive && (
+                  <div className="pt-4 border-2 border-blue-500 rounded-xl p-4 w-full">
+                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest text-center md:text-left">My Team Bidding</p>
+                    <div className="bg-blue-50 border border-blue-100 rounded-xl p-4 mb-4">
+                      <div className="flex items-center justify-between gap-3">
+                        <div>
+                          <p className="text-xs font-black text-slate-800 uppercase tracking-widest">{currentTeam.name}</p>
+                          <p className="text-[10px] text-slate-500 font-medium">Manager: {currentTeam.manager}</p>
+                        </div>
+                        <p className="text-[10px] font-black text-therap uppercase tracking-widest">Bal: ৳{currentTeam.remainingBudget}</p>
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => onMatchBid(currentTeam.id)}
+                          disabled={auction.biddingTeamIds.length === 0}
+                          className="flex-1 py-2 rounded-lg text-[10px] font-black uppercase tracking-wider bg-white border border-slate-300 text-slate-600 hover:bg-slate-100 disabled:opacity-40"
+                        >
+                          Match
+                        </button>
+                        <button
+                          onClick={() => onIncreaseBid(currentTeam.id)}
+                          className="flex-1 bg-therap text-white py-2 rounded-lg text-[10px] font-black uppercase tracking-wider hover:bg-blue-800 disabled:opacity-40 transition shadow-sm"
+                        >
+                          {auction.biddingTeamIds.length === 0 ? 'Start' : `+ ৳${nextIncrement}`}
+                        </button>
+                      </div>
+                      <div className="flex gap-1">
+                        <input
+                          type="number"
+                          placeholder="AMT"
+                          value={manualBids[currentTeam.id] || ''}
+                          onChange={(e) => setManualBids({ ...manualBids, [currentTeam.id]: e.target.value })}
+                          className="flex-1 min-w-0 bg-white border border-slate-200 rounded-lg px-2 py-1 text-[10px] font-bold outline-none focus:ring-1 focus:ring-therap"
+                        />
+                        <button
+                          onClick={() => handleManualBidSubmit(currentTeam.id)}
+                          className="bg-blue-600 text-white px-3 py-1 rounded-lg text-[9px] font-black uppercase tracking-wider hover:bg-blue-700 disabled:opacity-40 transition shadow-sm shrink-0"
+                        >
+                          Bid
+                        </button>
+                      </div>
+                    </div>
                   </div>
                 )}
 

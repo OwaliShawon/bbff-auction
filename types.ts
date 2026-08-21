@@ -32,6 +32,7 @@ export interface Team {
   id: string;
   name: string;
   manager: string;
+  pin: string;
   initialBudget: number;
   remainingBudget: number;
   logoUrl?: string;

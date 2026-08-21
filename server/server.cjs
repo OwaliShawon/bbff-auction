@@ -24,6 +24,8 @@ app.use(express.static(path.join(__dirname, '../public'))); // Serve public file
 
 const xlsx = require('xlsx');
 
+const generateTeamPin = () => Math.floor(1000 + Math.random() * 9000).toString();
+
 // Initial Data Structure
 const INITIAL_DATA = {
     players: [],
@@ -45,6 +47,12 @@ async function loadData() {
     try {
         if (await fs.pathExists(DB_FILE)) {
             const data = await fs.readJson(DB_FILE);
+            if (Array.isArray(data.teams)) {
+                data.teams = data.teams.map(team => ({
+                    ...team,
+                    pin: String(team.pin || generateTeamPin()).trim()
+                }));
+            }
             appData = { ...INITIAL_DATA, ...data };
             console.log('Data loaded from disk');
         } else {
@@ -125,6 +133,7 @@ async function loadData() {
                         id: teamId,
                         name: String(item['Team Name'] || item['Name']).trim(),
                         manager: managerName,
+                        pin: String(item['Team PIN'] || item['PIN'] || generateTeamPin()).trim(),
                         initialBudget: Number(item['Budget'] || 130000),
                         remainingBudget: Number(item['Budget'] || 130000)
                     });

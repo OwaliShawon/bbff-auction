@@ -26,6 +26,7 @@ import { LotteryResultModal } from './components/LotteryResultModal';
 const App: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'auction' | 'players' | 'teams' | 'reports'>('auction');
   const [role, setRole] = useState<UserRole>(UserRole.VIEWER);
+  const [currentTeamId, setCurrentTeamId] = useState<string | null>(null);
   const [players, setPlayers] = useState<Player[]>([]);
   const [teams, setTeams] = useState<Team[]>(INITIAL_TEAMS);
   const [auction, setAuction] = useState<AuctionState>({
@@ -119,6 +120,21 @@ const App: React.FC = () => {
     });
   };
 
+  const currentTeam = teams.find(team => team.id === currentTeamId) || null;
+
+  const handleTeamLogin = (pin: string): Team | null => {
+    const normalizedPin = pin.trim();
+    const matchedTeam = teams.find(team => team.pin === normalizedPin) || null;
+    if (!matchedTeam) return null;
+    setCurrentTeamId(matchedTeam.id);
+    setActiveTab('auction');
+    return matchedTeam;
+  };
+
+  const handleTeamLogout = () => {
+    setCurrentTeamId(null);
+  };
+
 
 
   const addLogEntry = (action: AuctionLogAction, player: Player, amount?: number, teamId?: string) => {
@@ -210,6 +226,7 @@ const App: React.FC = () => {
   };
 
   const handleIncreaseBid = (teamId: string, customAmount?: number) => {
+    if (role !== UserRole.ADMIN && currentTeamId !== teamId) return;
     const player = players.find(p => p.id === auction.currentPlayerId);
     if (!player) return;
 
@@ -240,6 +257,7 @@ const App: React.FC = () => {
   };
 
   const handleMatchBid = (teamId: string) => {
+    if (role !== UserRole.ADMIN && currentTeamId !== teamId) return;
     const player = players.find(p => p.id === auction.currentPlayerId);
     if (!player) return;
 
@@ -394,13 +412,22 @@ const App: React.FC = () => {
   };
 
   return (
-    <Layout activeTab={activeTab} setActiveTab={setActiveTab} role={role} setRole={setRole}>
+    <Layout
+      activeTab={activeTab}
+      setActiveTab={setActiveTab}
+      role={role}
+      setRole={setRole}
+      currentTeam={currentTeam}
+      onTeamLogin={handleTeamLogin}
+      onTeamLogout={handleTeamLogout}
+    >
       {activeTab === 'auction' && (
         <AuctionDashboard
           players={players}
           teams={teams}
           auction={auction}
           role={role}
+          currentTeam={currentTeam}
           onStartAuction={handleStartAuction}
           onIncreaseBid={handleIncreaseBid}
           onMatchBid={handleMatchBid}
