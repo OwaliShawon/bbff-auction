@@ -57,6 +57,7 @@ const generateTeamPin = () => Math.floor(1000 + Math.random() * 9000).toString()
 
 export const TeamManagement: React.FC<TeamManagementProps> = ({ teams, setTeams, role, onUpdateLogo, onClearAll }) => {
   const [showForm, setShowForm] = useState(false);
+  const [editingTeam, setEditingTeam] = useState<Team | null>(null);
   const [newTeam, setNewTeam] = useState({ name: '', manager: '', pin: '', initialBudget: DEFAULT_TEAM_BUDGET });
   const excelInputRef = useRef<HTMLInputElement>(null);
 
@@ -84,6 +85,23 @@ export const TeamManagement: React.FC<TeamManagementProps> = ({ teams, setTeams,
         alert("Failed to process logo.");
       }
     }
+  };
+
+  const handleSaveTeam = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingTeam) return;
+
+    const normalized: Team = {
+      ...editingTeam,
+      name: editingTeam.name.trim(),
+      manager: editingTeam.manager.trim(),
+      pin: editingTeam.pin.trim(),
+      initialBudget: Number(editingTeam.initialBudget) || 0,
+      remainingBudget: Number(editingTeam.remainingBudget) || 0,
+    };
+
+    setTeams(teams.map(team => (team.id === normalized.id ? normalized : team)));
+    setEditingTeam(null);
   };
 
   const handleExcelImport = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -209,6 +227,15 @@ export const TeamManagement: React.FC<TeamManagementProps> = ({ teams, setTeams,
                     style={{ width: `${(team.remainingBudget / team.initialBudget) * 100}%` }}
                   ></div>
                 </div>
+                {role === UserRole.ADMIN && (
+                  <button
+                    type="button"
+                    onClick={() => setEditingTeam({ ...team })}
+                    className="w-full mt-3 bg-slate-100 text-slate-700 py-2 rounded font-bold text-sm hover:bg-slate-200 transition"
+                  >
+                    Edit Team
+                  </button>
+                )}
               </div>
             </div>
           </div>
@@ -270,6 +297,75 @@ export const TeamManagement: React.FC<TeamManagementProps> = ({ teams, setTeams,
                 <button
                   type="button"
                   onClick={() => setShowForm(false)}
+                  className="flex-1 bg-slate-100 text-slate-600 py-2 rounded font-bold"
+                >
+                  Cancel
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {editingTeam && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl shadow-2xl p-6 w-full max-md">
+            <h3 className="text-xl font-bold mb-4">Edit Team</h3>
+            <form onSubmit={handleSaveTeam} className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-slate-700">Team Name</label>
+                <input
+                  className="w-full border p-2 rounded mt-1"
+                  value={editingTeam.name}
+                  onChange={e => setEditingTeam({ ...editingTeam, name: e.target.value })}
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-700">Team Manager</label>
+                <input
+                  className="w-full border p-2 rounded mt-1"
+                  value={editingTeam.manager}
+                  onChange={e => setEditingTeam({ ...editingTeam, manager: e.target.value })}
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-700">Team PIN</label>
+                <input
+                  className="w-full border p-2 rounded mt-1"
+                  value={editingTeam.pin}
+                  onChange={e => setEditingTeam({ ...editingTeam, pin: e.target.value })}
+                  required
+                />
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-sm font-medium text-slate-700">Initial Budget (৳)</label>
+                  <input
+                    type="number"
+                    className="w-full border p-2 rounded mt-1"
+                    value={editingTeam.initialBudget}
+                    onChange={e => setEditingTeam({ ...editingTeam, initialBudget: parseInt(e.target.value) || 0 })}
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-slate-700">Remaining Budget (৳)</label>
+                  <input
+                    type="number"
+                    className="w-full border p-2 rounded mt-1"
+                    value={editingTeam.remainingBudget}
+                    onChange={e => setEditingTeam({ ...editingTeam, remainingBudget: parseInt(e.target.value) || 0 })}
+                    required
+                  />
+                </div>
+              </div>
+              <div className="flex space-x-2 pt-2">
+                <button type="submit" className="flex-1 bg-therap text-white py-2 rounded font-bold">Save Changes</button>
+                <button
+                  type="button"
+                  onClick={() => setEditingTeam(null)}
                   className="flex-1 bg-slate-100 text-slate-600 py-2 rounded font-bold"
                 >
                   Cancel
