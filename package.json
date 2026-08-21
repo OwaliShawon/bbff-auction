@@ -8,7 +8,8 @@
     "dev:7001": "vite --port 7001",
     "dev:dual": "concurrently \"node server/server.cjs\" \"vite --port 3000\" \"vite --port 7001\"",
     "build": "vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "start": "node server/server.cjs"
   },
   "dependencies": {
     "@types/canvas-confetti": "^1.9.0",

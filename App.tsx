@@ -48,8 +48,14 @@ const App: React.FC = () => {
 
   // Socket.IO Connection
   useEffect(() => {
-    // Connect to server
-    const socket = io(`http://${window.location.hostname}:7002`);
+    // In dev, Socket.IO runs on :7002; in production default to same origin.
+    const socketUrl = import.meta.env.VITE_SOCKET_URL || (
+      import.meta.env.DEV
+        ? `http://${window.location.hostname}:7002`
+        : window.location.origin
+    );
+
+    const socket = io(socketUrl);
     socketRef.current = socket;
 
     socket.on('connect', () => {

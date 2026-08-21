@@ -15,12 +15,16 @@ const io = new Server(server, {
     }
 });
 
-const PORT = 7002;
+const PORT = Number(process.env.PORT) || 7002;
 const DB_FILE = path.join(__dirname, 'db.json');
+const DIST_DIR = path.join(__dirname, '../dist');
 
 app.use(cors());
 app.use(express.json());
 app.use(express.static(path.join(__dirname, '../public'))); // Serve public files
+if (fs.existsSync(DIST_DIR)) {
+    app.use(express.static(DIST_DIR));
+}
 
 const xlsx = require('xlsx');
 
@@ -245,6 +249,19 @@ app.get('/api/files', async (req, res) => {
     } catch (e) {
         res.status(500).json({ error: e.toString() });
     }
+});
+
+app.get(/.*/, (req, res, next) => {
+    if (req.path.startsWith('/api') || req.path.startsWith('/socket.io')) {
+        return next();
+    }
+
+    const indexPath = path.join(DIST_DIR, 'index.html');
+    if (fs.existsSync(indexPath)) {
+        return res.sendFile(indexPath);
+    }
+
+    return next();
 });
 
 loadData().then(() => {
