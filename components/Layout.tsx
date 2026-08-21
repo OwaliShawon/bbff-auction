@@ -9,15 +9,17 @@ interface LayoutProps {
   setActiveTab: (tab: any) => void;
   role: UserRole;
   setRole: (role: UserRole) => void;
+  teams: Team[];
   currentTeam: Team | null;
-  onTeamLogin: (pin: string) => Team | null;
+  onTeamLogin: (teamId: string, pin: string) => Team | null;
   onTeamLogout: () => void;
 }
 
-export const Layout: React.FC<LayoutProps> = ({ children, activeTab, setActiveTab, role, setRole, currentTeam, onTeamLogin, onTeamLogout }) => {
+export const Layout: React.FC<LayoutProps> = ({ children, activeTab, setActiveTab, role, setRole, teams, currentTeam, onTeamLogin, onTeamLogout }) => {
   const [isPinModalOpen, setIsPinModalOpen] = useState(false);
   const [isTeamLoginOpen, setIsTeamLoginOpen] = useState(false);
   const [pin, setPin] = useState('');
+  const [selectedTeamId, setSelectedTeamId] = useState('');
   const [teamPin, setTeamPin] = useState('');
   const [error, setError] = useState('');
   const [teamError, setTeamError] = useState('');
@@ -42,9 +44,10 @@ export const Layout: React.FC<LayoutProps> = ({ children, activeTab, setActiveTa
   };
 
   const handleTeamLoginSubmit = () => {
-    const team = onTeamLogin(teamPin);
+    const team = onTeamLogin(selectedTeamId, teamPin);
     if (team) {
       setTeamError('');
+      setSelectedTeamId('');
       setTeamPin('');
       setIsTeamLoginOpen(false);
     } else {
@@ -95,7 +98,12 @@ export const Layout: React.FC<LayoutProps> = ({ children, activeTab, setActiveTa
             </div>
           )}
           <button
-            onClick={() => setIsTeamLoginOpen(true)}
+            onClick={() => {
+              setIsTeamLoginOpen(true);
+              setSelectedTeamId(currentTeam?.id || teams[0]?.id || '');
+              setTeamPin('');
+              setTeamError('');
+            }}
             className="bg-white/10 hover:bg-white/20 text-sm border border-white/20 rounded px-3 py-1 outline-none transition"
           >
             Team Login
@@ -160,8 +168,21 @@ export const Layout: React.FC<LayoutProps> = ({ children, activeTab, setActiveTa
         <div className="fixed inset-0 bg-black bg-opacity-50 z-[60] flex items-center justify-center p-4">
           <div className="bg-white rounded-lg shadow-2xl p-6 w-full max-w-sm transform transition-all scale-100">
             <h3 className="text-lg font-bold text-gray-800 mb-4">Team Login</h3>
-            <p className="text-sm text-gray-600 mb-4">Enter your team PIN to start bidding for your manager.</p>
+            <p className="text-sm text-gray-600 mb-4">Select your team name, then enter the team PIN to start bidding.</p>
 
+            <label className="block text-sm font-medium text-slate-700 mb-1">Team Name</label>
+            <select
+              value={selectedTeamId}
+              onChange={(e) => setSelectedTeamId(e.target.value)}
+              className="w-full border border-gray-300 rounded px-3 py-2 text-base mb-3 focus:ring-2 focus:ring-therap focus:border-therap outline-none bg-white"
+            >
+              <option value="" disabled>Select a team</option>
+              {teams.map(team => (
+                <option key={team.id} value={team.id}>{team.name}</option>
+              ))}
+            </select>
+
+            <label className="block text-sm font-medium text-slate-700 mb-1">Team PIN</label>
             <input
               type="password"
               value={teamPin}

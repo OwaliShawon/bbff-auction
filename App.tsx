@@ -122,10 +122,11 @@ const App: React.FC = () => {
 
   const currentTeam = teams.find(team => team.id === currentTeamId) || null;
 
-  const handleTeamLogin = (pin: string): Team | null => {
+  const handleTeamLogin = (teamId: string, pin: string): Team | null => {
+    const matchedTeam = teams.find(team => team.id === teamId) || null;
     const normalizedPin = pin.trim();
-    const matchedTeam = teams.find(team => team.pin === normalizedPin) || null;
     if (!matchedTeam) return null;
+    if (matchedTeam.pin !== normalizedPin) return null;
     setCurrentTeamId(matchedTeam.id);
     setActiveTab('auction');
     return matchedTeam;
@@ -417,6 +418,7 @@ const App: React.FC = () => {
       setActiveTab={setActiveTab}
       role={role}
       setRole={setRole}
+      teams={teams}
       currentTeam={currentTeam}
       onTeamLogin={handleTeamLogin}
       onTeamLogout={handleTeamLogout}
