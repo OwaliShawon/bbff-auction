@@ -59,7 +59,9 @@ export const Layout: React.FC<LayoutProps> = ({ children, activeTab, setActiveTa
     <div className="min-h-screen flex flex-col relative">
       <header className="bg-therap text-white shadow-lg p-4 flex justify-between items-center sticky top-0 z-50">
         <div className="flex items-center space-x-3">
-          <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center text-therap font-bold">I</div>
+          <div className="w-11 h-11 bg-white/10 rounded-full flex items-center justify-center overflow-hidden border border-white/30">
+            <img src="/bbff.jpeg" alt="BBFF Logo" className="w-full h-full object-cover" />
+          </div>
           <h1 className="text-xl font-bold tracking-tight">Intra BBFF League Auction</h1>
         </div>
 
