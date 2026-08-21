@@ -13,6 +13,17 @@ export enum PlayerCategory {
   M = 'M'
 }
 
+export enum PlayerPosition {
+  GOALKEEPER = 'Goalkeeper',
+  DEFENDER = 'Defender',
+  MIDFIELDER = 'Midfielder',
+  ATTACKER = 'Attacker',
+  WINGER = 'Winger',
+  STRIKER = 'Striker',
+  ALL_ROUNDER = 'All-rounder',
+  MANAGER = 'Manager'
+}
+
 export interface Player {
   id: string;
   photoId?: string; // New field for matching Excel Photo ID with folder images

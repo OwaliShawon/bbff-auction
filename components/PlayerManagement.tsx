@@ -1,7 +1,8 @@
 
 import React, { useState, useRef } from 'react';
-import { Player, PlayerCategory, UserRole, PlayerStatus } from '../types';
+import { Player, PlayerCategory, PlayerPosition, UserRole, PlayerStatus } from '../types';
 import { ExcelImporter } from './ExcelImporter';
+import { normalizePositionLabel } from '../utils';
 
 interface PlayerManagementProps {
   players: Player[];
@@ -62,6 +63,7 @@ const resizeImage = (file: File, maxWidth: number, maxHeight: number): Promise<s
 export const PlayerManagement: React.FC<PlayerManagementProps> = ({
   players, onAddPlayer, onUpdatePlayer, onUpdatePhoto, setPlayers, onClearAll, role
 }) => {
+  const positionOptions = Object.values(PlayerPosition).filter(pos => pos !== PlayerPosition.MANAGER);
   const [showForm, setShowForm] = useState(false);
   const [isProcessingPhotos, setIsProcessingPhotos] = useState(false);
   const [editPlayerId, setEditPlayerId] = useState<string | null>(null);
@@ -88,10 +90,12 @@ export const PlayerManagement: React.FC<PlayerManagementProps> = ({
       ? `${formData.primaryPosition.trim()} / ${formData.secondaryPosition.trim()}`
       : formData.primaryPosition.trim();
 
+    const normalizedPosition = normalizePositionLabel(combinedPosition);
+
     const submissionData = {
       name: formData.name,
       department: formData.department,
-      position: combinedPosition,
+      position: normalizedPosition,
       category: formData.category
     };
 
@@ -117,7 +121,7 @@ export const PlayerManagement: React.FC<PlayerManagementProps> = ({
   };
 
   const startEdit = (player: Player) => {
-    const posParts = player.position.split(' / ');
+    const posParts = normalizePositionLabel(player.position).split(' / ');
     setFormData({
       name: player.name,
       department: player.department,
@@ -290,22 +294,30 @@ export const PlayerManagement: React.FC<PlayerManagementProps> = ({
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-bold text-slate-700">Primary Position</label>
-                  <input
+                  <select
                     className="w-full border p-2 rounded mt-1 outline-therap"
                     value={formData.primaryPosition}
                     onChange={e => setFormData({ ...formData, primaryPosition: e.target.value })}
-                    placeholder="e.g. Attack"
                     required
-                  />
+                  >
+                    <option value="" disabled>Select position</option>
+                    {positionOptions.map(position => (
+                      <option key={position} value={position}>{position}</option>
+                    ))}
+                  </select>
                 </div>
                 <div>
                   <label className="block text-sm font-bold text-slate-700">Secondary Position</label>
-                  <input
+                  <select
                     className="w-full border p-2 rounded mt-1 outline-therap"
                     value={formData.secondaryPosition}
                     onChange={e => setFormData({ ...formData, secondaryPosition: e.target.value })}
-                    placeholder="e.g. Midfield"
-                  />
+                  >
+                    <option value="">None</option>
+                    {positionOptions.map(position => (
+                      <option key={position} value={position}>{position}</option>
+                    ))}
+                  </select>
                 </div>
               </div>
               <div>

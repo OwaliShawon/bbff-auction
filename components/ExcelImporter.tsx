@@ -3,7 +3,7 @@ import React, { useRef } from 'react';
 import * as XLSX from 'xlsx';
 import { Player, PlayerStatus, PlayerCategory } from '../types';
 import { CATEGORY_BASE_PRICES } from '../constants';
-import { generateUUID } from '../utils';
+import { generateUUID, normalizePositionLabel } from '../utils';
 
 interface ExcelImporterProps {
   setPlayers: (players: Player[]) => void;
@@ -43,6 +43,7 @@ export const ExcelImporter: React.FC<ExcelImporterProps> = ({ setPlayers }) => {
           }
 
           if (!finalPosition) finalPosition = 'All-rounder';
+          finalPosition = normalizePositionLabel(finalPosition);
 
           let categoryInput = item['Category (A/B/C)'] || item['Category'] || item['Tier'] || 'C';
           let categoryValue: PlayerCategory = PlayerCategory.C;
