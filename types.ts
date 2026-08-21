@@ -24,11 +24,23 @@ export enum PlayerPosition {
   MANAGER = 'Manager'
 }
 
+export enum JerseySize {
+  XS = 'XS',
+  S = 'S',
+  M = 'M',
+  L = 'L',
+  XL = 'XL',
+  XXL = 'XXL'
+}
+
 export interface Player {
   id: string;
   photoId?: string; // New field for matching Excel Photo ID with folder images
   name: string;
-  department: string;
+  nickname?: string;
+  jerseyNumber?: string;
+  jerseySize?: JerseySize;
+  department?: string; // legacy field kept optional for backward compatibility
   position: string;
   category: PlayerCategory;
   basePrice: number;
