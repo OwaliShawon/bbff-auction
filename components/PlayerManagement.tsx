@@ -1,6 +1,6 @@
 
 import React, { useState, useRef } from 'react';
-import { Player, PlayerCategory, PlayerPosition, UserRole, PlayerStatus } from '../types';
+import { Player, PlayerCategory, PlayerPosition, UserRole, PlayerStatus, JerseySize } from '../types';
 import { ExcelImporter } from './ExcelImporter';
 import { normalizePositionLabel } from '../utils';
 
@@ -70,10 +70,12 @@ export const PlayerManagement: React.FC<PlayerManagementProps> = ({
   const folderInputRef = useRef<HTMLInputElement>(null);
   const [formData, setFormData] = useState({
     name: '',
+    nickname: '',
     department: '',
     primaryPosition: '',
     secondaryPosition: '',
-    category: PlayerCategory.A as PlayerCategory
+    category: PlayerCategory.A as PlayerCategory,
+    jerseySize: '' as JerseySize | ''
   });
 
   // Filter States
@@ -94,9 +96,11 @@ export const PlayerManagement: React.FC<PlayerManagementProps> = ({
 
     const submissionData = {
       name: formData.name,
+      nickname: formData.nickname || undefined,
       department: formData.department,
       position: normalizedPosition,
-      category: formData.category
+      category: formData.category,
+      jerseySize: formData.jerseySize || undefined
     };
 
     if (editPlayerId) {
@@ -115,7 +119,7 @@ export const PlayerManagement: React.FC<PlayerManagementProps> = ({
   };
 
   const resetForm = () => {
-    setFormData({ name: '', department: '', primaryPosition: '', secondaryPosition: '', category: PlayerCategory.A });
+    setFormData({ name: '', nickname: '', department: '', primaryPosition: '', secondaryPosition: '', category: PlayerCategory.A, jerseySize: '' });
     setEditPlayerId(null);
     setShowForm(false);
   };
@@ -124,10 +128,12 @@ export const PlayerManagement: React.FC<PlayerManagementProps> = ({
     const posParts = normalizePositionLabel(player.position).split(' / ');
     setFormData({
       name: player.name,
+      nickname: player.nickname || '',
       department: player.department,
       primaryPosition: posParts[0] || '',
       secondaryPosition: posParts[1] || '',
-      category: player.category
+      category: player.category,
+      jerseySize: player.jerseySize || ''
     });
     setEditPlayerId(player.id);
     setShowForm(true);
@@ -271,15 +277,26 @@ export const PlayerManagement: React.FC<PlayerManagementProps> = ({
           <div className="bg-white rounded-xl shadow-2xl p-6 w-full max-w-md">
             <h3 className="text-xl font-bold mb-4">{editPlayerId ? 'Edit Player Info' : 'Add New Player'}</h3>
             <form onSubmit={handleSubmit} className="space-y-4">
-              <div>
-                <label className="block text-sm font-bold text-slate-700">Full Name</label>
-                <input
-                  className="w-full border p-2 rounded mt-1 outline-therap"
-                  value={formData.name}
-                  onChange={e => setFormData({ ...formData, name: e.target.value })}
-                  placeholder="e.g. Mamoor"
-                  required
-                />
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-bold text-slate-700">Full Name</label>
+                  <input
+                    className="w-full border p-2 rounded mt-1 outline-therap"
+                    value={formData.name}
+                    onChange={e => setFormData({ ...formData, name: e.target.value })}
+                    placeholder="e.g. Mamoor"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-bold text-slate-700">Nickname</label>
+                  <input
+                    className="w-full border p-2 rounded mt-1 outline-therap"
+                    value={formData.nickname}
+                    onChange={e => setFormData({ ...formData, nickname: e.target.value })}
+                    placeholder="e.g. Mamu"
+                  />
+                </div>
               </div>
               <div>
                 <label className="block text-sm font-bold text-slate-700">Dept Name (Office)</label>
@@ -320,17 +337,32 @@ export const PlayerManagement: React.FC<PlayerManagementProps> = ({
                   </select>
                 </div>
               </div>
-              <div>
-                <label className="block text-sm font-bold text-slate-700">Category (A/B/C)</label>
-                <select
-                  className="w-full border p-2 rounded mt-1 outline-therap"
-                  value={formData.category}
-                  onChange={e => setFormData({ ...formData, category: e.target.value as PlayerCategory })}
-                >
-                  <option value={PlayerCategory.A}>Category A (Base 15,000)</option>
-                  <option value={PlayerCategory.B}>Category B (Base 8,000)</option>
-                  <option value={PlayerCategory.C}>Category C (Base 5,000)</option>
-                </select>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-bold text-slate-700">Category (A/B/C)</label>
+                  <select
+                    className="w-full border p-2 rounded mt-1 outline-therap"
+                    value={formData.category}
+                    onChange={e => setFormData({ ...formData, category: e.target.value as PlayerCategory })}
+                  >
+                    <option value={PlayerCategory.A}>Category A (Base 15,000)</option>
+                    <option value={PlayerCategory.B}>Category B (Base 8,000)</option>
+                    <option value={PlayerCategory.C}>Category C (Base 5,000)</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-bold text-slate-700">Jersey Size</label>
+                  <select
+                    className="w-full border p-2 rounded mt-1 outline-therap"
+                    value={formData.jerseySize}
+                    onChange={e => setFormData({ ...formData, jerseySize: e.target.value as JerseySize | '' })}
+                  >
+                    <option value="">Select size</option>
+                    {Object.values(JerseySize).map(size => (
+                      <option key={size} value={size}>{size}</option>
+                    ))}
+                  </select>
+                </div>
               </div>
               <div className="flex space-x-2 pt-2">
                 <button type="submit" className="flex-1 bg-therap text-white py-2 rounded font-bold">
