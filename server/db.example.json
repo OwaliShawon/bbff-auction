@@ -1,0 +1,11 @@
+{
+  "players": [],
+  "teams": [],
+  "auction": {
+    "currentPlayerId": null,
+    "currentBid": 0,
+    "biddingTeamIds": [],
+    "isActive": false
+  },
+  "auctionLog": []
+}

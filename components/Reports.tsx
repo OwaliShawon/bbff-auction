@@ -36,7 +36,7 @@ export const Reports: React.FC<ReportsProps> = ({ players, teams }) => {
     const ws = XLSX.utils.json_to_sheet(soldData);
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, 'Sold Players');
-    XLSX.writeFile(wb, 'Intra_BBFF_League_Sold_Players.xlsx');
+    XLSX.writeFile(wb, 'BBFF_Intra_League_S1_2026_Sold_Players.xlsx');
   };
 
   const exportTeamSummary = () => {
@@ -52,7 +52,7 @@ export const Reports: React.FC<ReportsProps> = ({ players, teams }) => {
     const ws = XLSX.utils.json_to_sheet(summaryData);
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, 'Team Summary');
-    XLSX.writeFile(wb, 'Intra_BBFF_League_Team_Summary.xlsx');
+    XLSX.writeFile(wb, 'BBFF_Intra_League_S1_2026_Team_Summary.xlsx');
   };
 
   const getPrimaryPosition = (pos: string) => pos.split(' / ')[0].trim();
