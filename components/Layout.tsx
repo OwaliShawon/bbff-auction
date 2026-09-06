@@ -62,7 +62,7 @@ export const Layout: React.FC<LayoutProps> = ({ children, activeTab, setActiveTa
           <div className="w-11 h-11 bg-white/10 rounded-full flex items-center justify-center overflow-hidden border border-white/30">
             <img src="/bbff.jpeg" alt="BBFF Logo" className="w-full h-full object-cover" />
           </div>
-          <h1 className="text-xl font-bold tracking-tight">Intra BBFF League Auction</h1>
+          <h1 className="text-xl font-bold tracking-tight">BBFF Intra League S1 - 2026 Auction</h1>
         </div>
 
         <nav className="hidden md:flex space-x-6 font-medium">
@@ -126,7 +126,7 @@ export const Layout: React.FC<LayoutProps> = ({ children, activeTab, setActiveTa
       </main>
 
       <footer className="bg-slate-100 p-4 text-center text-slate-500 text-xs border-t">
-        &copy; {new Date().getFullYear()} Intra BBFF League. All Rights Reserved.
+        &copy; {new Date().getFullYear()} BBFF Intra League S1 - 2026. All Rights Reserved.
       </footer>
 
       {/* PIN Modal */}
