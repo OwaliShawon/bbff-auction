@@ -1,10 +1,19 @@
 
+const path = require('path');
+require('dotenv').config({ path: path.join(__dirname, '../.env.local') });
 const express = require('express');
 const http = require('http');
 const { Server } = require('socket.io');
 const cors = require('cors');
 const fs = require('fs-extra');
-const path = require('path');
+const { Pool } = require('pg');
+
+const DATABASE_URL = process.env.DATABASE_URL;
+
+const pool = new Pool({
+    connectionString: DATABASE_URL,
+    ssl: { rejectUnauthorized: false }
+});
 
 const app = express();
 const server = http.createServer(app);
@@ -47,7 +56,41 @@ const INITIAL_DATA = {
 // Load Data
 let appData = { ...INITIAL_DATA };
 
+async function initDb() {
+    try {
+        await pool.query(`
+            CREATE TABLE IF NOT EXISTS app_state (
+                id INT PRIMARY KEY,
+                data JSONB NOT NULL,
+                updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+            );
+        `);
+    } catch (err) {
+        console.error('Error initializing PostgreSQL table:', err.message);
+    }
+}
+
 async function loadData() {
+    await initDb();
+    try {
+        const res = await pool.query('SELECT data FROM app_state WHERE id = 1');
+        if (res.rows.length > 0 && res.rows[0].data) {
+            const data = res.rows[0].data;
+            if (Array.isArray(data.teams)) {
+                data.teams = data.teams.map(team => ({
+                    ...team,
+                    pin: String(team.pin || generateTeamPin()).trim()
+                }));
+            }
+            appData = { ...INITIAL_DATA, ...data };
+            console.log('Data loaded successfully from PostgreSQL database');
+            await fs.writeJson(DB_FILE, appData, { spaces: 2 });
+            return;
+        }
+    } catch (err) {
+        console.error('Error loading data from PostgreSQL:', err.message);
+    }
+
     try {
         if (await fs.pathExists(DB_FILE)) {
             const data = await fs.readJson(DB_FILE);
@@ -58,7 +101,8 @@ async function loadData() {
                 }));
             }
             appData = { ...INITIAL_DATA, ...data };
-            console.log('Data loaded from disk');
+            console.log('Data loaded from disk db.json, migrating to PostgreSQL...');
+            await saveData();
         } else {
             // Try to seed from Excel files in public/data
             const playersFile = path.join(__dirname, '../public/data/Players.xlsx');
@@ -185,9 +229,22 @@ async function saveData() {
     try {
         await fs.writeJson(DB_FILE, appData, { spaces: 2 });
     } catch (err) {
-        console.error('Error saving data:', err);
+        console.error('Error saving data to disk db.json:', err);
+    }
+
+    try {
+        await pool.query(
+            `INSERT INTO app_state (id, data, updated_at)
+             VALUES (1, $1, NOW())
+             ON CONFLICT (id) DO UPDATE SET data = EXCLUDED.data, updated_at = NOW();`,
+            [JSON.stringify(appData)]
+        );
+        console.log('Data saved to PostgreSQL database');
+    } catch (err) {
+        console.error('Error saving data to PostgreSQL database:', err.message);
     }
 }
+
 
 // Socket.IO
 io.on('connection', (socket) => {
