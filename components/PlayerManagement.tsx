@@ -4,10 +4,13 @@ import { Player, PlayerCategory, PlayerPosition, UserRole, PlayerStatus, JerseyS
 import { ExcelImporter } from './ExcelImporter';
 import { normalizePositionLabel } from '../utils';
 
+import { CATEGORY_BASE_PRICES } from '../constants';
+
 interface PlayerManagementProps {
   players: Player[];
   onAddPlayer: (player: any) => void;
   onUpdatePlayer: (player: Player) => void;
+  onDeletePlayer?: (playerId: string) => void;
   onUpdatePhoto: (id: string, url: string) => void;
   setPlayers: (players: Player[]) => void;
   onClearAll: () => void;
@@ -61,7 +64,7 @@ const resizeImage = (file: File, maxWidth: number, maxHeight: number): Promise<s
 };
 
 export const PlayerManagement: React.FC<PlayerManagementProps> = ({
-  players, onAddPlayer, onUpdatePlayer, onUpdatePhoto, setPlayers, onClearAll, role
+  players, onAddPlayer, onUpdatePlayer, onDeletePlayer, onUpdatePhoto, setPlayers, onClearAll, role
 }) => {
   const positionOptions = Object.values(PlayerPosition).filter(pos => pos !== PlayerPosition.MANAGER);
   const [showForm, setShowForm] = useState(false);
@@ -345,9 +348,9 @@ export const PlayerManagement: React.FC<PlayerManagementProps> = ({
                     value={formData.category}
                     onChange={e => setFormData({ ...formData, category: e.target.value as PlayerCategory })}
                   >
-                    <option value={PlayerCategory.A}>Category A (Base 15,000)</option>
-                    <option value={PlayerCategory.B}>Category B (Base 8,000)</option>
-                    <option value={PlayerCategory.C}>Category C (Base 5,000)</option>
+                    <option value={PlayerCategory.A}>Category A (Base ৳{CATEGORY_BASE_PRICES[PlayerCategory.A].toLocaleString()})</option>
+                    <option value={PlayerCategory.B}>Category B (Base ৳{CATEGORY_BASE_PRICES[PlayerCategory.B].toLocaleString()})</option>
+                    <option value={PlayerCategory.C}>Category C (Base ৳{CATEGORY_BASE_PRICES[PlayerCategory.C].toLocaleString()})</option>
                   </select>
                 </div>
                 <div>
@@ -368,6 +371,21 @@ export const PlayerManagement: React.FC<PlayerManagementProps> = ({
                 <button type="submit" className="flex-1 bg-therap text-white py-2 rounded font-bold">
                   {editPlayerId ? 'Update Info' : 'Save Player'}
                 </button>
+                {editPlayerId && onDeletePlayer && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const p = players.find(x => x.id === editPlayerId);
+                      if (p && confirm(`Are you sure you want to delete "${p.name}"?`)) {
+                        onDeletePlayer(p.id);
+                        resetForm();
+                      }
+                    }}
+                    className="bg-red-600 text-white px-4 py-2 rounded font-bold hover:bg-red-700 transition"
+                  >
+                    Delete
+                  </button>
+                )}
                 <button
                   type="button"
                   onClick={resetForm}
@@ -461,8 +479,8 @@ export const PlayerManagement: React.FC<PlayerManagementProps> = ({
               )}
 
               {role === UserRole.ADMIN && (
-                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition flex items-center justify-center gap-2 p-4">
-                  <label className="cursor-pointer bg-white text-therap px-3 py-2 rounded-lg font-bold shadow text-xs">
+                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition flex items-center justify-center gap-2 p-4 flex-wrap">
+                  <label className="cursor-pointer bg-white text-therap px-3 py-2 rounded-lg font-bold shadow text-xs hover:bg-slate-50 transition">
                     Upload Photo
                     <input
                       type="file"
@@ -473,10 +491,22 @@ export const PlayerManagement: React.FC<PlayerManagementProps> = ({
                   </label>
                   <button
                     onClick={() => startEdit(player)}
-                    className="bg-therap text-white px-3 py-2 rounded-lg font-bold shadow text-xs"
+                    className="bg-therap text-white px-3 py-2 rounded-lg font-bold shadow text-xs hover:bg-blue-800 transition"
                   >
                     Edit Info
                   </button>
+                  {onDeletePlayer && (
+                    <button
+                      onClick={() => {
+                        if (confirm(`Are you sure you want to delete "${player.name}"?`)) {
+                          onDeletePlayer(player.id);
+                        }
+                      }}
+                      className="bg-red-600 text-white px-3 py-2 rounded-lg font-bold shadow text-xs hover:bg-red-700 transition"
+                    >
+                      Delete
+                    </button>
+                  )}
                 </div>
               )}
 
