@@ -10,6 +10,7 @@ interface TeamManagementProps {
   setTeams: (teams: Team[]) => void;
   role: UserRole;
   onUpdateLogo: (id: string, url: string) => void;
+  onDeleteTeam?: (teamId: string) => void;
   onClearAll: () => void;
 }
 
@@ -55,7 +56,7 @@ const resizeImage = (file: File, maxWidth: number, maxHeight: number): Promise<s
 
 const generateTeamPin = () => Math.floor(1000 + Math.random() * 9000).toString();
 
-export const TeamManagement: React.FC<TeamManagementProps> = ({ teams, setTeams, role, onUpdateLogo, onClearAll }) => {
+export const TeamManagement: React.FC<TeamManagementProps> = ({ teams, setTeams, role, onUpdateLogo, onDeleteTeam, onClearAll }) => {
   const [showForm, setShowForm] = useState(false);
   const [editingTeam, setEditingTeam] = useState<Team | null>(null);
   const [newTeam, setNewTeam] = useState({ name: '', manager: '', pin: '', initialBudget: DEFAULT_TEAM_BUDGET });
@@ -228,13 +229,28 @@ export const TeamManagement: React.FC<TeamManagementProps> = ({ teams, setTeams,
                   ></div>
                 </div>
                 {role === UserRole.ADMIN && (
-                  <button
-                    type="button"
-                    onClick={() => setEditingTeam({ ...team })}
-                    className="w-full mt-3 bg-slate-100 text-slate-700 py-2 rounded font-bold text-sm hover:bg-slate-200 transition"
-                  >
-                    Edit Team
-                  </button>
+                  <div className="flex gap-2 mt-3">
+                    <button
+                      type="button"
+                      onClick={() => setEditingTeam({ ...team })}
+                      className="flex-1 bg-slate-100 text-slate-700 py-2 rounded font-bold text-sm hover:bg-slate-200 transition"
+                    >
+                      Edit Team
+                    </button>
+                    {onDeleteTeam && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (confirm(`Are you sure you want to delete "${team.name}"? Any players assigned to this team will become UNSOLD.`)) {
+                            onDeleteTeam(team.id);
+                          }
+                        }}
+                        className="bg-red-50 text-red-600 border border-red-200 py-2 px-3 rounded font-bold text-sm hover:bg-red-100 transition"
+                      >
+                        Delete
+                      </button>
+                    )}
+                  </div>
                 )}
               </div>
             </div>
@@ -363,6 +379,20 @@ export const TeamManagement: React.FC<TeamManagementProps> = ({ teams, setTeams,
               </div>
               <div className="flex space-x-2 pt-2">
                 <button type="submit" className="flex-1 bg-therap text-white py-2 rounded font-bold">Save Changes</button>
+                {onDeleteTeam && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (confirm(`Are you sure you want to delete "${editingTeam.name}"? Any players assigned to this team will become UNSOLD.`)) {
+                        onDeleteTeam(editingTeam.id);
+                        setEditingTeam(null);
+                      }
+                    }}
+                    className="bg-red-600 text-white px-4 py-2 rounded font-bold hover:bg-red-700 transition"
+                  >
+                    Delete Team
+                  </button>
+                )}
                 <button
                   type="button"
                   onClick={() => setEditingTeam(null)}

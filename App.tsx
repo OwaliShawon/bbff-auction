@@ -414,8 +414,54 @@ const App: React.FC = () => {
     handleSetPlayers(prev => prev.map(p => p.id === playerId ? { ...p, photoUrl } : p));
   };
 
+  const deletePlayer = (playerId: string) => {
+    const player = players.find(p => p.id === playerId);
+    if (player && player.teamId && player.soldPrice) {
+      const soldPrice = player.soldPrice;
+      const teamId = player.teamId;
+      handleSetTeams(prev => prev.map(t => t.id === teamId ? { ...t, remainingBudget: t.remainingBudget + soldPrice } : t));
+    }
+
+    if (auction.currentPlayerId === playerId) {
+      handleSetAuction(prev => ({
+        ...prev,
+        currentPlayerId: null,
+        currentBid: 0,
+        biddingTeamIds: [],
+        isActive: false
+      }));
+    }
+
+    handleSetPlayers(prev => prev.filter(p => p.id !== playerId));
+  };
+
   const updateTeamLogo = (teamId: string, logoUrl: string) => {
     handleSetTeams(prev => prev.map(t => t.id === teamId ? { ...t, logoUrl } : t));
+  };
+
+  const deleteTeam = (teamId: string) => {
+    handleSetPlayers(prev => prev.map(p => {
+      if (p.teamId === teamId) {
+        return {
+          ...p,
+          status: PlayerStatus.UNSOLD,
+          teamId: undefined,
+          soldPrice: undefined
+        };
+      }
+      return p;
+    }));
+
+    if (currentTeamId === teamId) {
+      setCurrentTeamId(null);
+    }
+
+    handleSetAuction(prev => ({
+      ...prev,
+      biddingTeamIds: prev.biddingTeamIds.filter(id => id !== teamId)
+    }));
+
+    handleSetTeams(prev => prev.filter(t => t.id !== teamId));
   };
 
   return (
@@ -450,6 +496,7 @@ const App: React.FC = () => {
           players={players}
           onAddPlayer={addPlayer}
           onUpdatePlayer={updatePlayer}
+          onDeletePlayer={deletePlayer}
           onUpdatePhoto={updatePlayerPhoto}
           setPlayers={handleSetPlayers}
           onClearAll={() => handleSetPlayers([])}
@@ -462,6 +509,7 @@ const App: React.FC = () => {
           setTeams={handleSetTeams}
           role={role}
           onUpdateLogo={updateTeamLogo}
+          onDeleteTeam={deleteTeam}
           onClearAll={() => handleSetTeams([])}
         />
       )}

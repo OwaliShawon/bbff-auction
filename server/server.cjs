@@ -151,7 +151,7 @@ async function loadData() {
                         department: String(item['Dept Name (Office)'] || item['Dept'] || item['Department']).trim(),
                         position: String(item['Primary Playing Position'] || item['Position']).trim(),
                         category: String(item['Category']).trim(),
-                        basePrice: item['Category'] === 'A' ? 15000 : item['Category'] === 'B' ? 8000 : 5000,
+                        basePrice: item['Category'] === 'A' ? 15000 : item['Category'] === 'B' ? 10000 : 5000,
                         status: 'UNSOLD', // Default
                         photoId: pid,
                         photoUrl: findPhotoUrl(pid)
