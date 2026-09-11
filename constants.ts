@@ -8,11 +8,11 @@ export const CATEGORY_BASE_PRICES: Record<PlayerCategory, number> = {
   [PlayerCategory.M]: 0,
 };
 
-export const MIN_SQUAD_SIZE = 11;
+export const MIN_SQUAD_SIZE = 9;
 export const CAT_A_MAX_SPEND = 70000;
-export const MIN_CAT_A = 1;
-export const MIN_CAT_B = 3;
-export const MIN_CAT_C = 5;
+export const MIN_CAT_A = 2;
+export const MIN_CAT_B = 2;
+export const MIN_CAT_C = 2;
 export const CAT_B_END_SQUAD_THRESHOLD = 6;
 export const CAT_B_MIN_REMAINING_BUDGET = 40000;
 export const MAX_CAT_A_PLUS_B = 5;
