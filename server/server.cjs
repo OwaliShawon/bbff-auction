@@ -296,6 +296,15 @@ io.on('connection', (socket) => {
 });
 
 // REST API for file checking/uploading if needed
+app.get('/api/export-facebook', async (req, res) => {
+    const zipPath = path.join(__dirname, '../facebook_exports.zip');
+    if (fs.existsSync(zipPath)) {
+        res.download(zipPath, 'BBFF_Auction_Facebook_Exports.zip');
+    } else {
+        res.status(404).json({ error: 'Export zip file not found' });
+    }
+});
+
 app.get('/api/files', async (req, res) => {
     // List files in public/data
     try {
