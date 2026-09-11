@@ -1,0 +1,609 @@
+==================================================
+🏆 BBFF INTRA LEAGUE SEASON 1 - PLAYER & TEAM PROFILES
+==================================================
+
+
+--- PLAYER #1: AL HASAN TAHIM ---
+• Nickname: TAHIM
+• Category: Category B
+• Base Price: ৳10,000 BDT
+• Position: Defender
+• Department: def
+• Jersey Number: 8
+• Jersey Size: XXL
+--------------------------------------------------
+
+--- PLAYER #2: AARIFUL SHAHID SHAISHAB ---
+• Nickname: Childhood
+• Category: Category C
+• Base Price: ৳5,000 BDT
+• Position: Defender / Goalkeeper
+• Department: Def
+• Jersey Number: 69
+• Jersey Size: XL
+--------------------------------------------------
+
+--- PLAYER #3: ABDULLAH ISLAM WAFI ---
+• Nickname: Wafi
+• Category: Category B
+• Base Price: ৳10,000 BDT
+• Position: Midfielder
+• Department: mid
+• Jersey Number: 11
+• Jersey Size: L
+--------------------------------------------------
+
+--- PLAYER #4: ANASH IMRAN ---
+• Nickname: Anash
+• Category: Category A
+• Base Price: ৳15,000 BDT
+• Position: Attacker
+• Department: FW
+• Jersey Number: 11
+• Jersey Size: L
+--------------------------------------------------
+
+--- PLAYER #5: ASIR FAYSAL ---
+• Nickname: Faysal
+• Category: Category C
+• Base Price: ৳5,000 BDT
+• Position: Midfielder
+• Jersey Number: 7
+• Jersey Size: L
+--------------------------------------------------
+
+--- PLAYER #6: EMAMUL HAQUE HRIDOY ---
+• Nickname: Hridoy
+• Category: Category B
+• Base Price: ৳10,000 BDT
+• Position: Defender
+• Department: def
+• Jersey Number: 3
+• Jersey Size: L
+--------------------------------------------------
+
+--- PLAYER #7: FAHIMUL ISLAM KABBO ---
+• Nickname: KABBO
+• Category: Category B
+• Base Price: ৳10,000 BDT
+• Position: Defender
+• Department: def
+• Jersey Number: 4
+• Jersey Size: XXL
+--------------------------------------------------
+
+--- PLAYER #8: FAZLUL POLASH ---
+• Nickname: Polash
+• Category: Category A
+• Base Price: ৳15,000 BDT
+• Position: Attacker
+• Department: Fw
+• Jersey Number: 10
+• Jersey Size: M
+--------------------------------------------------
+
+--- PLAYER #9: GK SHANTO ---
+• Nickname: Gk Shanto
+• Category: Category A
+• Base Price: ৳15,000 BDT
+• Position: Goalkeeper
+• Department: GK
+• Jersey Number: 18
+• Jersey Size: L
+--------------------------------------------------
+
+--- PLAYER #10: HASIN RAIYAN SIDNEY ---
+• Nickname: Sidney
+• Category: Category B
+• Base Price: ৳10,000 BDT
+• Position: Winger / Midfielder
+• Department: Fw
+• Jersey Number: 7
+• Jersey Size: XXL
+--------------------------------------------------
+
+--- PLAYER #11: HIMEL HASAN ---
+• Nickname: Himel
+• Category: Category A
+• Base Price: ৳15,000 BDT
+• Position: Goalkeeper
+• Department: GK
+• Jersey Number: 1
+• Jersey Size: XXL
+--------------------------------------------------
+
+--- PLAYER #12: JAHIDUL ISLAM ZIHAD ---
+• Nickname: ZIHAD
+• Category: Category A
+• Base Price: ৳15,000 BDT
+• Position: Midfielder
+• Department: Mid
+• Jersey Number: 19
+• Jersey Size: L
+--------------------------------------------------
+
+--- PLAYER #13: MD ARMANUL ISLAM ---
+• Nickname: Rafit
+• Category: Category C
+• Base Price: ৳5,000 BDT
+• Position: Attacker
+• Jersey Number: 11
+• Jersey Size: XL
+--------------------------------------------------
+
+--- PLAYER #14: MD JAHID HASAN ---
+• Nickname: JAHID. H
+• Category: Category C
+• Base Price: ৳5,000 BDT
+• Position: Midfielder
+• Jersey Number: 9
+• Jersey Size: XXL
+--------------------------------------------------
+
+--- PLAYER #15: MD LAJUK ---
+• Nickname: Sarker
+• Category: Category C
+• Base Price: ৳5,000 BDT
+• Position: Defender
+• Department: Def
+• Jersey Number: 9
+• Jersey Size: L
+--------------------------------------------------
+
+--- PLAYER #16: MD SHOHEL ---
+• Nickname: Shohel
+• Category: Category B
+• Base Price: ৳10,000 BDT
+• Position: Attacker
+• Department: FW
+• Jersey Size: M
+--------------------------------------------------
+
+--- PLAYER #17: MOSHIUR RAHMAN ---
+• Nickname: MOSHIUR
+• Category: Category A
+• Base Price: ৳15,000 BDT
+• Position: Attacker
+• Department: FW
+• Jersey Number: 7
+• Jersey Size: L
+--------------------------------------------------
+
+--- PLAYER #18: MAHMUDUL HASSAN ADNAN ---
+• Nickname: Adnan
+• Category: Category C
+• Base Price: ৳5,000 BDT
+• Position: Midfielder
+• Jersey Number: 19
+• Jersey Size: XXL
+--------------------------------------------------
+
+--- PLAYER #19: MAZHARUL ISLAM SAWON ---
+• Nickname: Maz
+• Category: Category A
+• Base Price: ৳15,000 BDT
+• Position: Midfielder
+• Department: Mid
+• Jersey Number: 30
+• Jersey Size: XXL
+--------------------------------------------------
+
+--- PLAYER #20: MD ASRAFUR RAHMAN ---
+• Nickname: Ayon
+• Category: Category A
+• Base Price: ৳15,000 BDT
+• Position: Midfielder
+• Department: Mid
+• Jersey Number: 6
+• Jersey Size: L
+--------------------------------------------------
+
+--- PLAYER #21: MD EYASIN ARAFUT ROBIN ---
+• Nickname: Robin
+• Category: Category C
+• Base Price: ৳5,000 BDT
+• Position: Defender
+• Jersey Number: 14
+• Jersey Size: XXL
+--------------------------------------------------
+
+--- PLAYER #22: MD JAMAL KHANDAKAR ---
+• Nickname: Jamal
+• Category: Category B
+• Base Price: ৳10,000 BDT
+• Position: Attacker
+• Department: FW
+• Jersey Number: 7
+• Jersey Size: XL
+--------------------------------------------------
+
+--- PLAYER #23: MEHEDI HASAN ---
+• Nickname: SHISHIR
+• Category: Category B
+• Base Price: ৳10,000 BDT
+• Position: Attacker
+• Department: FW
+• Jersey Number: 7
+• Jersey Size: XXL
+--------------------------------------------------
+
+--- PLAYER #24: MEHEDI HASAN FARHAN ---
+• Nickname: Hasan
+• Category: Category B
+• Base Price: ৳10,000 BDT
+• Position: Midfielder
+• Department: mid
+• Jersey Number: 7
+• Jersey Size: L
+--------------------------------------------------
+
+--- PLAYER #25: MUHAMMAD SAIFULLAH ---
+• Nickname: Saiful
+• Category: Category A
+• Base Price: ৳15,000 BDT
+• Position: Midfielder
+• Department: MId
+• Jersey Number: 7
+• Jersey Size: XL
+--------------------------------------------------
+
+--- PLAYER #26: OWALI ULLAH SHAWON ---
+• Nickname: O SHAWON
+• Category: Category B
+• Base Price: ৳10,000 BDT
+• Position: Midfielder
+• Department: Mid
+• Jersey Number: 10
+• Jersey Size: XL
+--------------------------------------------------
+
+--- PLAYER #27: RAYHANUL ISLAM ---
+• Nickname: Rayhan
+• Category: Category A
+• Base Price: ৳15,000 BDT
+• Position: Midfielder
+• Department: Mid
+• Jersey Number: 25
+• Jersey Size: XXL
+--------------------------------------------------
+
+--- PLAYER #28: RIFAT ISLAM NILOY ---
+• Nickname: Niloy
+• Category: Category B
+• Base Price: ৳10,000 BDT
+• Position: Midfielder
+• Department: mid
+• Jersey Number: 8
+• Jersey Size: XXL
+--------------------------------------------------
+
+--- PLAYER #29: ROKIBUL HASAN ---
+• Nickname: Rokob
+• Category: Category B
+• Base Price: ৳10,000 BDT
+• Position: Defender
+• Department: CB
+• Jersey Number: 1
+• Jersey Size: L
+--------------------------------------------------
+
+--- PLAYER #30: S M IQRAMUL HAQUE ---
+• Nickname: Iqramulporag
+• Category: Category B
+• Base Price: ৳10,000 BDT
+• Position: Midfielder
+• Department: mid
+• Jersey Number: 6
+• Jersey Size: XXL
+--------------------------------------------------
+
+--- PLAYER #31: S M SOHANAR RAHMAN ---
+• Nickname: Sohan
+• Category: Category A
+• Base Price: ৳15,000 BDT
+• Position: Attacker
+• Department: FW
+• Jersey Number: 10
+• Jersey Size: XL
+--------------------------------------------------
+
+--- PLAYER #32: SADI BIN AZAD ---
+• Nickname: Enan
+• Category: Category C
+• Base Price: ৳5,000 BDT
+• Position: Defender
+• Department: Def
+• Jersey Number: 16
+• Jersey Size: M
+--------------------------------------------------
+
+--- PLAYER #33: SAIFUL SAIFUL ---
+• Nickname: Saiful
+• Category: Category A
+• Base Price: ৳15,000 BDT
+• Position: Defender
+• Department: Def
+• Jersey Number: 4
+• Jersey Size: L
+--------------------------------------------------
+
+--- PLAYER #34: SAJJAD HASAN ---
+• Nickname: Rabbi
+• Category: Category B
+• Base Price: ৳10,000 BDT
+• Position: Attacker
+• Department: FW
+• Jersey Number: 90
+• Jersey Size: XL
+--------------------------------------------------
+
+--- PLAYER #35: SAKIB CHOWDHURY ---
+• Nickname: Sakib
+• Category: Category C
+• Base Price: ৳5,000 BDT
+• Position: Midfielder
+• Jersey Number: 10
+• Jersey Size: XXL
+--------------------------------------------------
+
+--- PLAYER #36: SAMBIL MOSTOFA ---
+• Nickname: Sambil
+• Category: Category B
+• Base Price: ৳10,000 BDT
+• Position: Defender
+• Department: Def
+• Jersey Number: 10
+• Jersey Size: XXL
+--------------------------------------------------
+
+--- PLAYER #37: SAUD ASH-SHURAIM JOY ---
+• Nickname: Joy
+• Category: Category B
+• Base Price: ৳10,000 BDT
+• Position: Attacker
+• Department: FW
+• Jersey Number: 109
+• Jersey Size: L
+--------------------------------------------------
+
+--- PLAYER #38: SAYED HASAN SHIHAB ---
+• Nickname: SAYED
+• Category: Category C
+• Base Price: ৳5,000 BDT
+• Position: Midfielder
+• Jersey Number: 17
+• Jersey Size: XXL
+--------------------------------------------------
+
+--- PLAYER #39: SHABBIR AHMED ---
+• Nickname: Shabbir
+• Category: Category B
+• Base Price: ৳10,000 BDT
+• Position: Attacker
+• Department: FW
+• Jersey Number: 11
+• Jersey Size: M
+--------------------------------------------------
+
+--- PLAYER #40: TAHSIN NAKIB ---
+• Nickname: SIIUUU
+• Category: Category A
+• Base Price: ৳15,000 BDT
+• Position: Defender
+• Department: Def
+• Jersey Number: 7
+• Jersey Size: M
+--------------------------------------------------
+
+--- PLAYER #41: TAJEL KHAN ---
+• Nickname: Tajel
+• Category: Category B
+• Base Price: ৳10,000 BDT
+• Position: Defender
+• Department: def
+• Jersey Number: 4
+• Jersey Size: L
+--------------------------------------------------
+
+--- PLAYER #42: TAJUL ISLAM POLASH ---
+• Nickname: Polash
+• Category: Category A
+• Base Price: ৳15,000 BDT
+• Position: Attacker
+• Department: FW
+• Jersey Number: 10
+• Jersey Size: XL
+--------------------------------------------------
+
+--- PLAYER #43: TANJILUL HAQUE UTSHO ---
+• Nickname: Utsho
+• Category: Category A
+• Base Price: ৳15,000 BDT
+• Position: Goalkeeper
+• Department: GK
+• Jersey Number: 1
+• Jersey Size: XXL
+--------------------------------------------------
+
+--- PLAYER #44: TANZIL AHMED SUJON ---
+• Nickname: Sujon
+• Category: Category A
+• Base Price: ৳15,000 BDT
+• Position: Defender
+• Department: Def
+• Jersey Number: 12
+• Jersey Size: L
+--------------------------------------------------
+
+--- PLAYER #45: TASBIH RAHMAN ---
+• Nickname: TASBIH
+• Category: Category C
+• Base Price: ৳5,000 BDT
+• Position: Attacker
+• Jersey Number: 10
+• Jersey Size: XXL
+--------------------------------------------------
+
+--- PLAYER #46: TORIKUL ISLAM TAREK ---
+• Nickname: Tarek
+• Category: Category C
+• Base Price: ৳5,000 BDT
+• Position: Midfielder
+• Department: MID
+• Jersey Number: 30
+• Jersey Size: L
+--------------------------------------------------
+
+--- PLAYER #47: SAKIL M ---
+• Nickname: Sakil
+• Category: Category C
+• Base Price: ৳5,000 BDT
+• Position: Defender / Attacker
+• Department: Def
+• Jersey Size: M
+--------------------------------------------------
+
+--- PLAYER #48: MAHFUZ AHMED MUNNA ---
+• Nickname: Munna
+• Category: Category A
+• Base Price: ৳15,000 BDT
+• Position: Defender
+• Department: Def
+• Jersey Number: 04
+• Jersey Size: L
+--------------------------------------------------
+
+--- PLAYER #49: SHAHADAT SIAM ---
+• Nickname: Siam
+• Category: Category C
+• Base Price: ৳5,000 BDT
+• Position: Defender
+• Department: Def
+• Jersey Number: 16
+• Jersey Size: XL
+--------------------------------------------------
+
+--- PLAYER #50: MD. ABDULLAH - ALL - MASUD BHUIYAN ---
+• Nickname: MASUD
+• Category: Category B
+• Base Price: ৳10,000 BDT
+• Position: Forward
+• Department: FW
+• Jersey Number: 10
+• Jersey Size: XL
+--------------------------------------------------
+
+--- PLAYER #51: NAZMUL ANTOR ---
+• Nickname: Antor
+• Category: Category B
+• Base Price: ৳10,000 BDT
+• Position: Forward
+• Department: FW
+• Jersey Number: 8
+• Jersey Size: L
+--------------------------------------------------
+
+--- PLAYER #52: NAZMUL ALAM ---
+• Nickname: Nazmul
+• Category: Category C
+• Base Price: ৳5,000 BDT
+• Position: Forward
+• Department: FW
+• Jersey Number: 19
+• Jersey Size: XL
+--------------------------------------------------
+
+--- PLAYER #53: MAHEDI HASAN HRIDOY ---
+• Nickname: M.Hridoy
+• Category: Category A
+• Base Price: ৳15,000 BDT
+• Position: Goalkeeper
+• Department: GK
+• Jersey Number: 01
+• Jersey Size: XXL
+--------------------------------------------------
+
+--- PLAYER #54: OMAR A LAM ---
+• Nickname: Lam
+• Category: Category B
+• Base Price: ৳10,000 BDT
+• Position: Goalkeeper
+• Department: GK
+• Jersey Number: 1
+• Jersey Size: 4XL
+--------------------------------------------------
+
+--- PLAYER #55: MD.MOHAIMINUL ISLAM TURJO ---
+• Nickname: Turjo
+• Category: Category A
+• Base Price: ৳15,000 BDT
+• Position: Midfielder
+• Department: Mid
+• Jersey Number: 11
+• Jersey Size: M
+--------------------------------------------------
+
+--- PLAYER #56: MD AMANUL ISLAM AKASH ---
+• Nickname: Sky
+• Category: Category A
+• Base Price: ৳15,000 BDT
+• Position: Midfielder
+• Department: Mid
+• Jersey Number: 0
+• Jersey Size: XL
+--------------------------------------------------
+
+--- PLAYER #57: MUHAMMAD ---
+• Nickname: Muhammad
+• Category: Category A
+• Base Price: ৳15,000 BDT
+• Position: Midfielder
+• Department: Mid
+• Jersey Number: 10
+• Jersey Size: XL
+--------------------------------------------------
+
+--- PLAYER #58: RAKIB AHAMED RIFAT ---
+• Nickname: Rakib
+• Category: Category B
+• Base Price: ৳10,000 BDT
+• Position: Midfielder
+• Department: Mid
+• Jersey Number: 5
+• Jersey Size: XL
+--------------------------------------------------
+
+
+==================================================
+🛡️ REGISTERED TEAMS
+==================================================
+
+--- TEAM #1: BBFF FURŪSĀN ---
+• Team Manager: Sidney
+• Starting Budget: ৳150,000 BDT
+--------------------------------------------------
+
+--- TEAM #2: BBFF HILFUL FUZUL ---
+• Team Manager: Omi
+• Starting Budget: ৳150,000 BDT
+--------------------------------------------------
+
+--- TEAM #3: BBFF WARLORDS ---
+• Team Manager: Shaishab
+• Starting Budget: ৳150,000 BDT
+--------------------------------------------------
+
+--- TEAM #4: BBFF AL JULFIKAR ---
+• Team Manager: Niloy
+• Starting Budget: ৳150,000 BDT
+--------------------------------------------------
+
+--- TEAM #5: BBFF REVOLUTION ---
+• Team Manager: Utsho
+• Starting Budget: ৳150,000 BDT
+--------------------------------------------------
+
+--- TEAM #6: BBFF CALM STORM ---
+• Team Manager: Sujon
+• Starting Budget: ৳150,000 BDT
+--------------------------------------------------
