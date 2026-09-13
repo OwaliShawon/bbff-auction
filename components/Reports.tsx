@@ -1,18 +1,25 @@
 
 import React, { useState } from 'react';
 import * as XLSX from 'xlsx';
-import { Player, Team, PlayerStatus } from '../types';
+import { Player, Team, PlayerStatus, UserRole } from '../types';
 import { MIN_SQUAD_SIZE } from '../constants';
+import { PlayerTeamModal } from './PlayerTeamModal';
 
 interface ReportsProps {
   players: Player[];
   teams: Team[];
+  role?: UserRole;
+  onAssignPlayerToTeam?: (playerId: string, teamId: string, price: number) => void;
+  onRemovePlayerFromTeam?: (playerId: string) => void;
 }
 
-export const Reports: React.FC<ReportsProps> = ({ players, teams }) => {
+export const Reports: React.FC<ReportsProps> = ({ players, teams, role, onAssignPlayerToTeam, onRemovePlayerFromTeam }) => {
   const [reportView, setReportView] = useState<'summary' | 'profiles'>('profiles');
   const [selectedTeamId, setSelectedTeamId] = useState<string>('ALL');
+  const [modalPlayer, setModalPlayer] = useState<Player | null>(null);
+  const [addingToTeamId, setAddingToTeamId] = useState<string | null>(null);
 
+  const unsoldPlayers = players.filter(p => !p.teamId && p.status === PlayerStatus.UNSOLD);
   const soldPlayers = players.filter(p => p.status === PlayerStatus.SOLD);
   const totalSold = soldPlayers.length;
   const totalSpent = teams.reduce((acc, t) => acc + (t.initialBudget - t.remainingBudget), 0);
@@ -235,7 +242,16 @@ export const Reports: React.FC<ReportsProps> = ({ players, teams }) => {
                         </div>
                       </div>
 
-                      <div className="flex gap-4 shrink-0">
+                      <div className="flex gap-4 shrink-0 items-center">
+                        {role === UserRole.ADMIN && (
+                          <button
+                            onClick={() => setAddingToTeamId(team.id)}
+                            className="bg-therap text-white px-4 py-2.5 rounded-2xl font-bold text-xs hover:bg-blue-800 transition shadow-sm flex items-center"
+                          >
+                            <svg className="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4"></path></svg>
+                            Add Player
+                          </button>
+                        )}
                         <div className="text-center px-6 py-3 bg-white rounded-2xl border border-slate-200 shadow-sm">
                           <p className="text-[10px] font-black uppercase text-slate-400 mb-1">Squad Size</p>
                           <p className="text-2xl font-black text-slate-800">{squad.length} <span className="text-sm font-normal text-slate-400">/ {MIN_SQUAD_SIZE}</span></p>
@@ -259,7 +275,7 @@ export const Reports: React.FC<ReportsProps> = ({ players, teams }) => {
                           </div>
                           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                             {members.map(p => (
-                              <div key={p.id} className="bg-slate-50 rounded-2xl p-4 flex items-center gap-4 border border-slate-100 hover:border-therap/30 hover:bg-blue-50/50 transition-all cursor-default group/player">
+                              <div key={p.id} className="bg-slate-50 rounded-2xl p-4 flex items-center gap-4 border border-slate-100 hover:border-therap/30 hover:bg-blue-50/50 transition-all cursor-default group/player relative">
                                 <div className="w-16 h-16 rounded-xl overflow-hidden bg-white border border-slate-200 shrink-0 shadow-sm relative">
                                   {p.photoUrl ? (
                                     <img src={p.photoUrl} className="w-full h-full object-cover group-hover/player:scale-110 transition duration-500" />
@@ -277,6 +293,27 @@ export const Reports: React.FC<ReportsProps> = ({ players, teams }) => {
                                     <span className="text-[9px] font-black text-therap bg-blue-100 px-1.5 py-0.5 rounded uppercase tracking-tighter">CAT {p.category}</span>
                                     <span className="text-xs font-black text-slate-700">৳{p.soldPrice?.toLocaleString()}</span>
                                   </div>
+
+                                  {role === UserRole.ADMIN && (
+                                    <div className="flex gap-1.5 mt-2 pt-1 border-t border-slate-200/60">
+                                      <button
+                                        onClick={() => setModalPlayer(p)}
+                                        className="text-[10px] font-bold text-therap bg-white border border-slate-200 px-2 py-0.5 rounded hover:bg-slate-100 transition"
+                                      >
+                                        Transfer
+                                      </button>
+                                      <button
+                                        onClick={() => {
+                                          if (confirm(`Release "${p.name}" from ${team.name}? Refund: ৳${(p.soldPrice || 0).toLocaleString()}`)) {
+                                            if (onRemovePlayerFromTeam) onRemovePlayerFromTeam(p.id);
+                                          }
+                                        }}
+                                        className="text-[10px] font-bold text-red-600 bg-red-50 border border-red-200 px-2 py-0.5 rounded hover:bg-red-100 transition"
+                                      >
+                                        Release
+                                      </button>
+                                    </div>
+                                  )}
                                 </div>
                               </div>
                             ))}
@@ -296,6 +333,63 @@ export const Reports: React.FC<ReportsProps> = ({ players, teams }) => {
           </div>
         </React.Fragment>
       )}
+
+      {/* Picker Modal for Adding Unsold Player to Team */}
+      {addingToTeamId && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+          <div className="w-full max-w-md bg-white rounded-2xl shadow-2xl p-6 space-y-4">
+            <h3 className="text-xl font-bold text-slate-800">
+              Add Player to {teams.find(t => t.id === addingToTeamId)?.name}
+            </h3>
+            <p className="text-xs text-slate-500">Select an unsold player from the pool to assign to this team.</p>
+
+            {unsoldPlayers.length === 0 ? (
+              <p className="text-sm font-medium text-slate-400 py-4 text-center">No available unsold players.</p>
+            ) : (
+              <div className="max-h-60 overflow-y-auto divide-y border rounded-xl">
+                {unsoldPlayers.map(p => (
+                  <div
+                    key={p.id}
+                    onClick={() => {
+                      setAddingToTeamId(null);
+                      setModalPlayer({ ...p, teamId: addingToTeamId });
+                    }}
+                    className="p-3 hover:bg-blue-50 cursor-pointer flex justify-between items-center transition"
+                  >
+                    <div>
+                      <p className="font-bold text-sm text-slate-800">{p.name}</p>
+                      <p className="text-xs text-slate-500">{p.position} • Cat {p.category}</p>
+                    </div>
+                    <span className="text-xs font-bold text-therap">Base ৳{p.basePrice?.toLocaleString()}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            <div className="flex justify-end pt-2">
+              <button
+                onClick={() => setAddingToTeamId(null)}
+                className="px-4 py-2 bg-slate-100 text-slate-600 rounded-xl font-bold text-sm"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <PlayerTeamModal
+        isOpen={!!modalPlayer}
+        onClose={() => setModalPlayer(null)}
+        player={modalPlayer}
+        teams={teams}
+        onAssign={(pid, tid, price) => {
+          if (onAssignPlayerToTeam) onAssignPlayerToTeam(pid, tid, price);
+        }}
+        onRemove={(pid) => {
+          if (onRemovePlayerFromTeam) onRemovePlayerFromTeam(pid);
+        }}
+      />
 
       {/* Audit Checklist Display */}
       <div className="bg-slate-900 text-white rounded-3xl p-8 relative overflow-hidden">

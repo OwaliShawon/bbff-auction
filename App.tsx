@@ -464,6 +464,72 @@ const App: React.FC = () => {
     handleSetTeams(prev => prev.filter(t => t.id !== teamId));
   };
 
+  const handleAssignPlayerToTeam = (playerId: string, targetTeamId: string, price: number) => {
+    const player = players.find(p => p.id === playerId);
+    if (!player) return;
+
+    const oldTeamId = player.teamId;
+    const oldPrice = player.soldPrice || 0;
+
+    // Update teams remaining budgets
+    handleSetTeams(prev => prev.map(t => {
+      let updatedBudget = t.remainingBudget;
+
+      // Refund old team if changing teams or updating price
+      if (oldTeamId && t.id === oldTeamId) {
+        updatedBudget += oldPrice;
+      }
+
+      // Deduct from new target team
+      if (t.id === targetTeamId) {
+        updatedBudget -= price;
+      }
+
+      return { ...t, remainingBudget: updatedBudget };
+    }));
+
+    // Update player
+    handleSetPlayers(prev => prev.map(p => {
+      if (p.id === playerId) {
+        const nextStatus = p.category === PlayerCategory.M ? PlayerStatus.MANAGER : PlayerStatus.SOLD;
+        return {
+          ...p,
+          teamId: targetTeamId,
+          soldPrice: price,
+          status: nextStatus
+        };
+      }
+      return p;
+    }));
+
+    addLogEntry('SOLD', player, price, targetTeamId);
+  };
+
+  const handleRemovePlayerFromTeam = (playerId: string) => {
+    const player = players.find(p => p.id === playerId);
+    if (!player) return;
+
+    if (player.teamId) {
+      const oldTeamId = player.teamId;
+      const oldPrice = player.soldPrice || 0;
+      handleSetTeams(prev => prev.map(t => t.id === oldTeamId ? { ...t, remainingBudget: t.remainingBudget + oldPrice } : t));
+    }
+
+    handleSetPlayers(prev => prev.map(p => {
+      if (p.id === playerId) {
+        return {
+          ...p,
+          teamId: undefined,
+          soldPrice: undefined,
+          status: PlayerStatus.UNSOLD
+        };
+      }
+      return p;
+    }));
+
+    addLogEntry('UNSOLD', player);
+  };
+
   return (
     <Layout
       activeTab={activeTab}
@@ -494,6 +560,7 @@ const App: React.FC = () => {
       {activeTab === 'players' && (
         <PlayerManagement
           players={players}
+          teams={teams}
           onAddPlayer={addPlayer}
           onUpdatePlayer={updatePlayer}
           onDeletePlayer={deletePlayer}
@@ -501,20 +568,31 @@ const App: React.FC = () => {
           setPlayers={handleSetPlayers}
           onClearAll={() => handleSetPlayers([])}
           role={role}
+          onAssignPlayerToTeam={handleAssignPlayerToTeam}
+          onRemovePlayerFromTeam={handleRemovePlayerFromTeam}
         />
       )}
       {activeTab === 'teams' && (
         <TeamManagement
           teams={teams}
           setTeams={handleSetTeams}
+          players={players}
           role={role}
           onUpdateLogo={updateTeamLogo}
           onDeleteTeam={deleteTeam}
           onClearAll={() => handleSetTeams([])}
+          onAssignPlayerToTeam={handleAssignPlayerToTeam}
+          onRemovePlayerFromTeam={handleRemovePlayerFromTeam}
         />
       )}
       {activeTab === 'reports' && (
-        <Reports players={players} teams={teams} />
+        <Reports
+          players={players}
+          teams={teams}
+          role={role}
+          onAssignPlayerToTeam={handleAssignPlayerToTeam}
+          onRemovePlayerFromTeam={handleRemovePlayerFromTeam}
+        />
       )}
       <LotteryResultModal
         isOpen={!!lotteryResult}

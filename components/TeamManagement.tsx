@@ -1,17 +1,21 @@
 
 import React, { useState, useRef } from 'react';
 import * as XLSX from 'xlsx';
-import { Team, UserRole } from '../types';
+import { Team, UserRole, Player, PlayerStatus } from '../types';
 import { DEFAULT_TEAM_BUDGET } from '../constants';
 import { generateUUID } from '../utils';
+import { PlayerTeamModal } from './PlayerTeamModal';
 
 interface TeamManagementProps {
   teams: Team[];
   setTeams: (teams: Team[]) => void;
+  players?: Player[];
   role: UserRole;
   onUpdateLogo: (id: string, url: string) => void;
   onDeleteTeam?: (teamId: string) => void;
   onClearAll: () => void;
+  onAssignPlayerToTeam?: (playerId: string, teamId: string, price: number) => void;
+  onRemovePlayerFromTeam?: (playerId: string) => void;
 }
 
 const resizeImage = (file: File, maxWidth: number, maxHeight: number): Promise<string> => {
@@ -56,10 +60,15 @@ const resizeImage = (file: File, maxWidth: number, maxHeight: number): Promise<s
 
 const generateTeamPin = () => Math.floor(1000 + Math.random() * 9000).toString();
 
-export const TeamManagement: React.FC<TeamManagementProps> = ({ teams, setTeams, role, onUpdateLogo, onDeleteTeam, onClearAll }) => {
+export const TeamManagement: React.FC<TeamManagementProps> = ({
+  teams, setTeams, players = [], role, onUpdateLogo, onDeleteTeam, onClearAll, onAssignPlayerToTeam, onRemovePlayerFromTeam
+}) => {
   const [showForm, setShowForm] = useState(false);
   const [editingTeam, setEditingTeam] = useState<Team | null>(null);
   const [newTeam, setNewTeam] = useState({ name: '', manager: '', pin: '', initialBudget: DEFAULT_TEAM_BUDGET });
+  const [squadModalTeamId, setSquadModalTeamId] = useState<string | null>(null);
+  const [modalPlayer, setModalPlayer] = useState<Player | null>(null);
+  const [addingPlayerToTeamId, setAddingPlayerToTeamId] = useState<string | null>(null);
   const excelInputRef = useRef<HTMLInputElement>(null);
 
   const handleAddTeam = (e: React.FormEvent) => {
@@ -186,76 +195,91 @@ export const TeamManagement: React.FC<TeamManagementProps> = ({ teams, setTeams,
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {teams.map(team => (
-          <div key={team.id} className="bg-white rounded-xl shadow border border-slate-200 overflow-hidden flex flex-col group transition hover:shadow-lg">
-            <div className="p-6 flex flex-col space-y-4">
-              <div className="flex justify-between items-start">
-                <div className="flex-1">
-                  <h3 className="text-xl font-extrabold text-slate-800 uppercase tracking-tight truncate">{team.name}</h3>
-                  <p className="text-slate-500 text-sm font-medium">{team.manager}</p>
-                  {role === UserRole.ADMIN && (
-                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-2">PIN: {team.pin}</p>
-                  )}
-                </div>
-                <div className="relative w-16 h-16 bg-slate-50 border border-slate-100 rounded-xl overflow-hidden flex items-center justify-center shrink-0 ml-4 group">
-                  {team.logoUrl ? (
-                    <img src={team.logoUrl} alt={team.name} className="w-full h-full object-contain" />
-                  ) : (
-                    <span className="text-therap font-black text-2xl">{team.name.charAt(0)}</span>
-                  )}
-                  {role === UserRole.ADMIN && (
-                    <label className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition flex items-center justify-center cursor-pointer">
-                      <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"></path><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
-                      <input
-                        type="file"
-                        className="hidden"
-                        accept="image/png, image/jpeg, image/jpg, image/webp"
-                        onChange={(e) => handleLogoUpload(team.id, e)}
-                      />
-                    </label>
-                  )}
-                </div>
-              </div>
-
-              <div className="pt-4 space-y-2 border-t border-slate-50">
-                <div className="flex justify-between text-xs font-bold uppercase tracking-wider text-slate-400">
-                  <span>Balance</span>
-                  <span className="text-therap">৳ {team.remainingBudget}</span>
-                </div>
-                <div className="h-2 bg-slate-100 rounded-full overflow-hidden">
-                  <div
-                    className="h-full bg-therap"
-                    style={{ width: `${(team.remainingBudget / team.initialBudget) * 100}%` }}
-                  ></div>
-                </div>
-                {role === UserRole.ADMIN && (
-                  <div className="flex gap-2 mt-3">
-                    <button
-                      type="button"
-                      onClick={() => setEditingTeam({ ...team })}
-                      className="flex-1 bg-slate-100 text-slate-700 py-2 rounded font-bold text-sm hover:bg-slate-200 transition"
-                    >
-                      Edit Team
-                    </button>
-                    {onDeleteTeam && (
-                      <button
-                        type="button"
-                        onClick={() => {
-                          if (confirm(`Are you sure you want to delete "${team.name}"? Any players assigned to this team will become UNSOLD.`)) {
-                            onDeleteTeam(team.id);
-                          }
-                        }}
-                        className="bg-red-50 text-red-600 border border-red-200 py-2 px-3 rounded font-bold text-sm hover:bg-red-100 transition"
-                      >
-                        Delete
-                      </button>
+        {teams.map(team => {
+          const squad = players.filter(p => p.teamId === team.id);
+          return (
+            <div key={team.id} className="bg-white rounded-xl shadow border border-slate-200 overflow-hidden flex flex-col group transition hover:shadow-lg">
+              <div className="p-6 flex flex-col space-y-4">
+                <div className="flex justify-between items-start">
+                  <div className="flex-1">
+                    <h3 className="text-xl font-extrabold text-slate-800 uppercase tracking-tight truncate">{team.name}</h3>
+                    <p className="text-slate-500 text-sm font-medium">{team.manager}</p>
+                    {role === UserRole.ADMIN && (
+                      <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-2">PIN: {team.pin}</p>
                     )}
                   </div>
-                )}
+                  <div className="relative w-16 h-16 bg-slate-50 border border-slate-100 rounded-xl overflow-hidden flex items-center justify-center shrink-0 ml-4 group">
+                    {team.logoUrl ? (
+                      <img src={team.logoUrl} alt={team.name} className="w-full h-full object-contain" />
+                    ) : (
+                      <span className="text-therap font-black text-2xl">{team.name.charAt(0)}</span>
+                    )}
+                    {role === UserRole.ADMIN && (
+                      <label className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition flex items-center justify-center cursor-pointer">
+                        <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"></path><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                        <input
+                          type="file"
+                          className="hidden"
+                          accept="image/png, image/jpeg, image/jpg, image/webp"
+                          onChange={(e) => handleLogoUpload(team.id, e)}
+                        />
+                      </label>
+                    )}
+                  </div>
+                </div>
+
+                <div className="pt-4 space-y-2 border-t border-slate-50">
+                  <div className="flex justify-between text-xs font-bold uppercase tracking-wider text-slate-400">
+                    <span>Balance</span>
+                    <span className="text-therap">৳ {team.remainingBudget.toLocaleString()}</span>
+                  </div>
+                  <div className="h-2 bg-slate-100 rounded-full overflow-hidden">
+                    <div
+                      className="h-full bg-therap"
+                      style={{ width: `${(team.remainingBudget / team.initialBudget) * 100}%` }}
+                    ></div>
+                  </div>
+
+                  <div className="flex justify-between items-center pt-2 text-xs font-medium text-slate-600 border-t border-slate-50">
+                    <span>Squad: <strong className="text-slate-800 font-bold">{squad.length} players</strong></span>
+                    <button
+                      type="button"
+                      onClick={() => setSquadModalTeamId(team.id)}
+                      className="text-therap font-bold hover:underline flex items-center gap-1"
+                    >
+                      Manage Roster →
+                    </button>
+                  </div>
+
+                  {role === UserRole.ADMIN && (
+                    <div className="flex gap-2 mt-3">
+                      <button
+                        type="button"
+                        onClick={() => setEditingTeam({ ...team })}
+                        className="flex-1 bg-slate-100 text-slate-700 py-2 rounded font-bold text-sm hover:bg-slate-200 transition"
+                      >
+                        Edit Team
+                      </button>
+                      {onDeleteTeam && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (confirm(`Are you sure you want to delete "${team.name}"? Any players assigned to this team will become UNSOLD.`)) {
+                              onDeleteTeam(team.id);
+                            }
+                          }}
+                          className="bg-red-50 text-red-600 border border-red-200 py-2 px-3 rounded font-bold text-sm hover:bg-red-100 transition"
+                        >
+                          Delete
+                        </button>
+                      )}
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
 
       {teams.length === 0 && (
@@ -405,6 +429,147 @@ export const TeamManagement: React.FC<TeamManagementProps> = ({ teams, setTeams,
           </div>
         </div>
       )}
+
+      {squadModalTeamId && (() => {
+        const squadTeam = teams.find(t => t.id === squadModalTeamId);
+        const squadMembers = players.filter(p => p.teamId === squadModalTeamId);
+
+        if (!squadTeam) return null;
+
+        return (
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-2xl shadow-2xl p-6 w-full max-w-xl max-h-[85vh] flex flex-col">
+              <div className="flex justify-between items-center pb-4 border-b border-slate-100">
+                <div>
+                  <h3 className="text-xl font-bold text-slate-800">{squadTeam.name} Roster</h3>
+                  <p className="text-xs text-slate-500">Manager: {squadTeam.manager} • Balance: ৳{squadTeam.remainingBudget.toLocaleString()}</p>
+                </div>
+                {role === UserRole.ADMIN && (
+                  <button
+                    onClick={() => setAddingPlayerToTeamId(squadTeam.id)}
+                    className="bg-therap text-white px-3 py-1.5 rounded-lg font-bold text-xs hover:bg-blue-800 transition"
+                  >
+                    + Add Player
+                  </button>
+                )}
+              </div>
+
+              <div className="flex-1 overflow-y-auto py-4 space-y-3">
+                {squadMembers.length === 0 ? (
+                  <p className="text-center text-slate-400 py-8 text-sm">No players currently assigned to this team.</p>
+                ) : (
+                  squadMembers.map(member => (
+                    <div key={member.id} className="p-3 bg-slate-50 border border-slate-200 rounded-xl flex justify-between items-center">
+                      <div className="flex items-center space-x-3">
+                        {member.photoUrl ? (
+                          <img src={member.photoUrl} alt={member.name} className="w-10 h-10 rounded-full object-cover" />
+                        ) : (
+                          <div className="w-10 h-10 rounded-full bg-slate-200 flex items-center justify-center font-bold text-slate-500">
+                            {member.name.charAt(0)}
+                          </div>
+                        )}
+                        <div>
+                          <p className="font-bold text-slate-800 text-sm">{member.name}</p>
+                          <p className="text-xs text-slate-500">{member.position} • Cat {member.category}</p>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center space-x-3">
+                        <span className="font-black text-sm text-slate-700">৳{(member.soldPrice || 0).toLocaleString()}</span>
+                        {role === UserRole.ADMIN && (
+                          <div className="flex space-x-1">
+                            <button
+                              onClick={() => setModalPlayer(member)}
+                              className="text-xs bg-white text-therap border border-slate-200 px-2 py-1 rounded font-bold hover:bg-slate-100"
+                            >
+                              Transfer
+                            </button>
+                            <button
+                              onClick={() => {
+                                if (confirm(`Release "${member.name}" from ${squadTeam.name}? Refund: ৳${(member.soldPrice || 0).toLocaleString()}`)) {
+                                  if (onRemovePlayerFromTeam) onRemovePlayerFromTeam(member.id);
+                                }
+                              }}
+                              className="text-xs bg-red-50 text-red-600 border border-red-200 px-2 py-1 rounded font-bold hover:bg-red-100"
+                            >
+                              Release
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+
+              <div className="pt-4 border-t border-slate-100 flex justify-end">
+                <button
+                  onClick={() => setSquadModalTeamId(null)}
+                  className="bg-slate-100 text-slate-600 px-5 py-2 rounded-xl font-bold text-sm hover:bg-slate-200"
+                >
+                  Close
+                </button>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
+
+      {addingPlayerToTeamId && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+          <div className="w-full max-w-md bg-white rounded-2xl shadow-2xl p-6 space-y-4">
+            <h3 className="text-xl font-bold text-slate-800">
+              Add Player to {teams.find(t => t.id === addingPlayerToTeamId)?.name}
+            </h3>
+            <p className="text-xs text-slate-500">Select an unsold player to assign to this team.</p>
+
+            {players.filter(p => !p.teamId && p.status === PlayerStatus.UNSOLD).length === 0 ? (
+              <p className="text-sm font-medium text-slate-400 py-4 text-center">No available unsold players.</p>
+            ) : (
+              <div className="max-h-60 overflow-y-auto divide-y border rounded-xl">
+                {players.filter(p => !p.teamId && p.status === PlayerStatus.UNSOLD).map(p => (
+                  <div
+                    key={p.id}
+                    onClick={() => {
+                      setAddingPlayerToTeamId(null);
+                      setModalPlayer({ ...p, teamId: addingPlayerToTeamId });
+                    }}
+                    className="p-3 hover:bg-blue-50 cursor-pointer flex justify-between items-center transition"
+                  >
+                    <div>
+                      <p className="font-bold text-sm text-slate-800">{p.name}</p>
+                      <p className="text-xs text-slate-500">{p.position} • Cat {p.category}</p>
+                    </div>
+                    <span className="text-xs font-bold text-therap">Base ৳{p.basePrice?.toLocaleString()}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            <div className="flex justify-end pt-2">
+              <button
+                onClick={() => setAddingPlayerToTeamId(null)}
+                className="px-4 py-2 bg-slate-100 text-slate-600 rounded-xl font-bold text-sm"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <PlayerTeamModal
+        isOpen={!!modalPlayer}
+        onClose={() => setModalPlayer(null)}
+        player={modalPlayer}
+        teams={teams}
+        onAssign={(pid, tid, price) => {
+          if (onAssignPlayerToTeam) onAssignPlayerToTeam(pid, tid, price);
+        }}
+        onRemove={(pid) => {
+          if (onRemovePlayerFromTeam) onRemovePlayerFromTeam(pid);
+        }}
+      />
     </div>
   );
 };

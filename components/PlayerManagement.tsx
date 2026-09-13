@@ -1,13 +1,14 @@
 
 import React, { useState, useRef } from 'react';
-import { Player, PlayerCategory, PlayerPosition, UserRole, PlayerStatus, JerseySize } from '../types';
+import { Player, PlayerCategory, PlayerPosition, UserRole, PlayerStatus, JerseySize, Team } from '../types';
 import { ExcelImporter } from './ExcelImporter';
 import { normalizePositionLabel } from '../utils';
-
 import { CATEGORY_BASE_PRICES } from '../constants';
+import { PlayerTeamModal } from './PlayerTeamModal';
 
 interface PlayerManagementProps {
   players: Player[];
+  teams: Team[];
   onAddPlayer: (player: any) => void;
   onUpdatePlayer: (player: Player) => void;
   onDeletePlayer?: (playerId: string) => void;
@@ -15,6 +16,8 @@ interface PlayerManagementProps {
   setPlayers: (players: Player[]) => void;
   onClearAll: () => void;
   role: UserRole;
+  onAssignPlayerToTeam: (playerId: string, teamId: string, price: number) => void;
+  onRemovePlayerFromTeam: (playerId: string) => void;
 }
 
 const resizeImage = (file: File, maxWidth: number, maxHeight: number): Promise<string> => {
@@ -64,12 +67,13 @@ const resizeImage = (file: File, maxWidth: number, maxHeight: number): Promise<s
 };
 
 export const PlayerManagement: React.FC<PlayerManagementProps> = ({
-  players, onAddPlayer, onUpdatePlayer, onDeletePlayer, onUpdatePhoto, setPlayers, onClearAll, role
+  players, teams, onAddPlayer, onUpdatePlayer, onDeletePlayer, onUpdatePhoto, setPlayers, onClearAll, role, onAssignPlayerToTeam, onRemovePlayerFromTeam
 }) => {
   const positionOptions = Object.values(PlayerPosition).filter(pos => pos !== PlayerPosition.MANAGER);
   const [showForm, setShowForm] = useState(false);
   const [isProcessingPhotos, setIsProcessingPhotos] = useState(false);
   const [editPlayerId, setEditPlayerId] = useState<string | null>(null);
+  const [teamModalPlayer, setTeamModalPlayer] = useState<Player | null>(null);
   const folderInputRef = useRef<HTMLInputElement>(null);
   const [formData, setFormData] = useState({
     name: '',
@@ -490,6 +494,12 @@ export const PlayerManagement: React.FC<PlayerManagementProps> = ({
                     />
                   </label>
                   <button
+                    onClick={() => setTeamModalPlayer(player)}
+                    className="bg-emerald-600 text-white px-3 py-2 rounded-lg font-bold shadow text-xs hover:bg-emerald-700 transition"
+                  >
+                    {player.teamId ? 'Transfer / Team' : 'Assign Team'}
+                  </button>
+                  <button
                     onClick={() => startEdit(player)}
                     className="bg-therap text-white px-3 py-2 rounded-lg font-bold shadow text-xs hover:bg-blue-800 transition"
                   >
@@ -528,11 +538,19 @@ export const PlayerManagement: React.FC<PlayerManagementProps> = ({
               </div>
 
               <div className="mt-auto space-y-2">
+                {player.teamId && (
+                  <div className="flex justify-between text-xs py-1.5 border-t border-slate-50">
+                    <span className="text-slate-400 font-bold uppercase tracking-tighter">Team</span>
+                    <span className="font-bold text-therap truncate max-w-[120px] text-right">
+                      {teams.find(t => t.id === player.teamId)?.name || 'Assigned'}
+                    </span>
+                  </div>
+                )}
                 <div className="flex justify-between text-xs py-1.5 border-t border-slate-50">
                   <span className="text-slate-400 font-bold uppercase tracking-tighter">Base Price</span>
                   <span className="font-black text-slate-700">৳ {player.basePrice}</span>
                 </div>
-                {player.soldPrice && (
+                {player.soldPrice !== undefined && (
                   <div className="flex justify-between text-xs py-1.5 border-t border-slate-50">
                     <span className="text-slate-400 font-bold uppercase tracking-tighter">Sold Price</span>
                     <span className="font-black text-green-600">৳ {player.soldPrice}</span>
@@ -566,6 +584,15 @@ export const PlayerManagement: React.FC<PlayerManagementProps> = ({
           </div>
         )}
       </div>
+
+      <PlayerTeamModal
+        isOpen={!!teamModalPlayer}
+        onClose={() => setTeamModalPlayer(null)}
+        player={teamModalPlayer}
+        teams={teams}
+        onAssign={onAssignPlayerToTeam}
+        onRemove={onRemovePlayerFromTeam}
+      />
     </div>
   );
 };
