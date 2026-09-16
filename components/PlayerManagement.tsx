@@ -5,6 +5,7 @@ import { ExcelImporter } from './ExcelImporter';
 import { normalizePositionLabel } from '../utils';
 import { CATEGORY_BASE_PRICES } from '../constants';
 import { PlayerTeamModal } from './PlayerTeamModal';
+import { downloadPlayerFacebookCard } from '../utils/cardExporter';
 
 interface PlayerManagementProps {
   players: Player[];
@@ -526,6 +527,12 @@ export const PlayerManagement: React.FC<PlayerManagementProps> = ({
                     />
                   </label>
                   <button
+                    onClick={() => downloadPlayerFacebookCard(player, teams.find(t => t.id === player.teamId))}
+                    className="bg-purple-600 text-white px-3 py-2 rounded-lg font-bold shadow text-xs hover:bg-purple-700 transition"
+                  >
+                    📷 Facebook Card
+                  </button>
+                  <button
                     onClick={() => setTeamModalPlayer(player)}
                     className="bg-emerald-600 text-white px-3 py-2 rounded-lg font-bold shadow text-xs hover:bg-emerald-700 transition"
                   >
@@ -551,6 +558,16 @@ export const PlayerManagement: React.FC<PlayerManagementProps> = ({
                   )}
                 </div>
               )}
+
+              <div className="absolute top-3 left-3">
+                <button
+                  onClick={() => downloadPlayerFacebookCard(player, teams.find(t => t.id === player.teamId))}
+                  title="Download Facebook Card PNG"
+                  className="bg-black/60 hover:bg-purple-700 text-white p-1.5 rounded-lg text-xs font-bold transition backdrop-blur-sm shadow-md"
+                >
+                  📷 Card
+                </button>
+              </div>
 
               <div className="absolute top-3 right-3 flex space-x-1">
                 <span className={`px-2 py-1 rounded text-[10px] font-bold uppercase shadow-sm ${player.status === PlayerStatus.SOLD ? 'bg-green-500 text-white' : 'bg-blue-500 text-white'}`}>

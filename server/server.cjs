@@ -295,14 +295,31 @@ io.on('connection', (socket) => {
     });
 });
 
-// REST API for file checking/uploading if needed
+const archiver = require('archiver');
+
 app.get('/api/export-facebook', async (req, res) => {
     const zipPath = path.join(__dirname, '../facebook_exports.zip');
+    const exportFolder = path.join(__dirname, '../facebook_exports');
+
     if (fs.existsSync(zipPath)) {
-        res.download(zipPath, 'BBFF_Auction_Facebook_Exports.zip');
-    } else {
-        res.status(404).json({ error: 'Export zip file not found' });
+        return res.download(zipPath, 'BBFF_Auction_Facebook_Exports.zip');
     }
+
+    if (fs.existsSync(exportFolder)) {
+        res.attachment('BBFF_Auction_Facebook_Exports.zip');
+        const archive = archiver('zip', { zlib: { level: 9 } });
+
+        archive.on('error', (err) => {
+            console.error('Archiver error:', err);
+            if (!res.headersSent) res.status(500).send({ error: err.message });
+        });
+
+        archive.pipe(res);
+        archive.directory(exportFolder, false);
+        return archive.finalize();
+    }
+
+    res.status(404).json({ error: 'Export files not found.' });
 });
 
 app.get('/api/files', async (req, res) => {

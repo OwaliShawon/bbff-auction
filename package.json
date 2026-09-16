@@ -13,6 +13,7 @@
   },
   "dependencies": {
     "@types/canvas-confetti": "^1.9.0",
+    "archiver": "^8.0.0",
     "body-parser": "^2.2.1",
     "canvas-confetti": "^1.9.4",
     "concurrently": "^9.2.1",
@@ -20,6 +21,7 @@
     "dotenv": "^17.4.2",
     "express": "^5.2.1",
     "fs-extra": "^11.3.3",
+    "html2canvas": "^1.4.1",
     "multer": "^2.0.2",
     "pg": "^8.23.0",
     "react": "^19.2.3",
