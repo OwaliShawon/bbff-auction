@@ -85,11 +85,12 @@ export const PlayerManagement: React.FC<PlayerManagementProps> = ({
     jerseySize: '' as JerseySize | ''
   });
 
-  // Filter States
+  // Filter & Sort States
   const [filterName, setFilterName] = useState('');
   const [filterPosition, setFilterPosition] = useState('');
   const [filterCategory, setFilterCategory] = useState<string>('All');
   const [filterStatus, setFilterStatus] = useState<string>('All');
+  const [sortBy, setSortBy] = useState<string>('default');
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -215,21 +216,37 @@ export const PlayerManagement: React.FC<PlayerManagementProps> = ({
     }
   };
 
-  const filteredPlayers = players.filter(player => {
-    // Name Filter
-    if (filterName && !player.name.toLowerCase().includes(filterName.toLowerCase())) return false;
+  const filteredPlayers = players
+    .filter(player => {
+      // Name Filter
+      if (filterName && !player.name.toLowerCase().includes(filterName.toLowerCase())) return false;
 
-    // Position Filter
-    if (filterPosition && !player.position.toLowerCase().includes(filterPosition.toLowerCase())) return false;
+      // Position Filter
+      if (filterPosition && !player.position.toLowerCase().includes(filterPosition.toLowerCase())) return false;
 
-    // Category Filter
-    if (filterCategory !== 'All' && player.category !== filterCategory) return false;
+      // Category Filter
+      if (filterCategory !== 'All' && player.category !== filterCategory) return false;
 
-    // Status Filter
-    if (filterStatus !== 'All' && player.status !== filterStatus) return false;
+      // Status Filter
+      if (filterStatus !== 'All' && player.status !== filterStatus) return false;
 
-    return true;
-  });
+      return true;
+    })
+    .sort((a, b) => {
+      if (sortBy === 'sold_desc') {
+        return (b.soldPrice || 0) - (a.soldPrice || 0);
+      }
+      if (sortBy === 'sold_asc') {
+        return (a.soldPrice || 0) - (b.soldPrice || 0);
+      }
+      if (sortBy === 'base_desc') {
+        return (b.basePrice || 0) - (a.basePrice || 0);
+      }
+      if (sortBy === 'name_asc') {
+        return a.name.localeCompare(b.name);
+      }
+      return 0;
+    });
 
   return (
     <div className="space-y-6">
@@ -451,6 +468,20 @@ export const PlayerManagement: React.FC<PlayerManagementProps> = ({
               <option value={PlayerStatus.UNSOLD}>Unsold</option>
             </select>
           </div>
+          <div className="w-full md:w-52">
+            <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Sort By</label>
+            <select
+              className="w-full border p-2 rounded outline-therap text-sm bg-white font-medium"
+              value={sortBy}
+              onChange={e => setSortBy(e.target.value)}
+            >
+              <option value="default">Default Order</option>
+              <option value="sold_desc">Sold Price: Max to Min (High to Low)</option>
+              <option value="sold_asc">Sold Price: Min to Max (Low to High)</option>
+              <option value="base_desc">Base Price: High to Low</option>
+              <option value="name_asc">Name (A-Z)</option>
+            </select>
+          </div>
           <div className="flex items-end">
             <button
               onClick={() => {
@@ -458,6 +489,7 @@ export const PlayerManagement: React.FC<PlayerManagementProps> = ({
                 setFilterPosition('');
                 setFilterCategory('All');
                 setFilterStatus('All');
+                setSortBy('default');
               }}
               className="px-4 py-2 bg-slate-100 text-slate-600 rounded hover:bg-slate-200 text-sm font-bold transition"
             >
