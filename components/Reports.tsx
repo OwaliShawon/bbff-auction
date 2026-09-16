@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import * as XLSX from 'xlsx';
 import { Player, Team, PlayerStatus, UserRole } from '../types';
@@ -14,36 +13,76 @@ interface ReportsProps {
 }
 
 export const Reports: React.FC<ReportsProps> = ({ players, teams, role, onAssignPlayerToTeam, onRemovePlayerFromTeam }) => {
-  const [reportView, setReportView] = useState<'summary' | 'profiles'>('profiles');
+  const [reportView, setReportView] = useState<'sold_leaderboard' | 'profiles' | 'summary'>('sold_leaderboard');
   const [selectedTeamId, setSelectedTeamId] = useState<string>('ALL');
   const [modalPlayer, setModalPlayer] = useState<Player | null>(null);
   const [addingToTeamId, setAddingToTeamId] = useState<string | null>(null);
 
+  // Sold Leaderboard Filters & State
+  const [leaderboardSearch, setLeaderboardSearch] = useState<string>('');
+  const [leaderboardCategory, setLeaderboardCategory] = useState<string>('ALL');
+  const [leaderboardTeamId, setLeaderboardTeamId] = useState<string>('ALL');
+  const [sortOrder, setSortOrder] = useState<'desc' | 'asc'>('desc'); // 'desc' = Max to Min
+
   const unsoldPlayers = players.filter(p => !p.teamId && p.status === PlayerStatus.UNSOLD);
-  const soldPlayers = players.filter(p => p.status === PlayerStatus.SOLD);
+  const soldPlayers = players.filter(p => p.status === PlayerStatus.SOLD && p.soldPrice !== undefined);
   const totalSold = soldPlayers.length;
   const totalSpent = teams.reduce((acc, t) => acc + (t.initialBudget - t.remainingBudget), 0);
-  const totalBudget = teams.reduce((acc, t) => acc + t.initialBudget, 0);
   const remainingBudget = teams.reduce((acc, t) => acc + t.remainingBudget, 0);
 
-  const mostExpensive = [...soldPlayers].sort((a, b) => (b.soldPrice || 0) - (a.soldPrice || 0))[0];
+  // Sort sold players Max to Min (or Min to Max based on sortOrder)
+  const sortedSoldPlayers = [...soldPlayers].sort((a, b) => {
+    const priceA = a.soldPrice || 0;
+    const priceB = b.soldPrice || 0;
+    return sortOrder === 'desc' ? priceB - priceA : priceA - priceB;
+  });
 
-  const exportSoldPlayers = () => {
-    const soldData = players
-      .filter(p => p.status === PlayerStatus.SOLD)
-      .map(p => ({
+  const filteredSoldPlayers = sortedSoldPlayers.filter(p => {
+    if (leaderboardSearch) {
+      const q = leaderboardSearch.toLowerCase();
+      const matchName = p.name.toLowerCase().includes(q);
+      const matchNick = p.nickname ? p.nickname.toLowerCase().includes(q) : false;
+      const matchDept = p.department ? p.department.toLowerCase().includes(q) : false;
+      if (!matchName && !matchNick && !matchDept) return false;
+    }
+    if (leaderboardCategory !== 'ALL' && p.category !== leaderboardCategory) {
+      return false;
+    }
+    if (leaderboardTeamId !== 'ALL' && p.teamId !== leaderboardTeamId) {
+      return false;
+    }
+    return true;
+  });
+
+  const mostExpensive = [...soldPlayers].sort((a, b) => (b.soldPrice || 0) - (a.soldPrice || 0))[0];
+  const lowestSold = [...soldPlayers].sort((a, b) => (a.soldPrice || 0) - (b.soldPrice || 0))[0];
+  const averageSoldPrice = totalSold > 0 ? Math.round(totalSpent / totalSold) : 0;
+
+  const exportMaxToMinSoldList = () => {
+    const soldData = sortedSoldPlayers.map((p, idx) => {
+      const team = teams.find(t => t.id === p.teamId);
+      const base = p.basePrice || 0;
+      const sold = p.soldPrice || 0;
+      const increase = sold - base;
+      return {
+        'Rank': idx + 1,
         'Player Name': p.name,
+        'Nickname': p.nickname || '',
         'Position': p.position,
-        'Department': p.department,
+        'Department': p.department || '',
         'Category': p.category,
-        'Sold To': teams.find(t => t.id === p.teamId)?.name || 'Unknown',
-        'Price': p.soldPrice
-      }));
+        'Sold To Team': team?.name || 'Unknown',
+        'Base Price (৳)': base,
+        'Sold Price (৳)': sold,
+        'Price Increase (৳)': increase,
+        'Growth %': base > 0 ? `${Math.round((increase / base) * 100)}%` : 'N/A'
+      };
+    });
 
     const ws = XLSX.utils.json_to_sheet(soldData);
     const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, 'Sold Players');
-    XLSX.writeFile(wb, 'BBFF_Intra_League_S1_2026_Sold_Players.xlsx');
+    XLSX.utils.book_append_sheet(wb, ws, 'Sold Players (Max to Min)');
+    XLSX.writeFile(wb, 'BBFF_Sold_Players_Max_To_Min.xlsx');
   };
 
   const exportTeamSummary = () => {
@@ -80,10 +119,11 @@ export const Reports: React.FC<ReportsProps> = ({ players, teams, role, onAssign
 
   return (
     <div className="space-y-8">
+      {/* Page Header */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
-          <h2 className="text-2xl font-bold text-slate-800 tracking-tight">Auction Analytics & Squad Profiles</h2>
-          <p className="text-sm text-slate-500 mt-1">Review market dynamics and finalized team compositions.</p>
+          <h2 className="text-2xl font-bold text-slate-800 tracking-tight">Auction Analytics & Player Rankings</h2>
+          <p className="text-sm text-slate-500 mt-1">Review market dynamics, sold prices ranking (Max to Min), and squad compositions.</p>
         </div>
         <div className="flex flex-wrap gap-3">
           <button
@@ -94,10 +134,11 @@ export const Reports: React.FC<ReportsProps> = ({ players, teams, role, onAssign
             Download Facebook Pack
           </button>
           <button
-            onClick={exportSoldPlayers}
-            className="bg-green-50 text-green-700 border border-green-200 px-4 py-2 rounded-lg font-bold hover:bg-green-100 transition shadow-sm text-sm"
+            onClick={exportMaxToMinSoldList}
+            className="bg-emerald-600 text-white px-4 py-2 rounded-lg font-bold hover:bg-emerald-700 transition shadow-sm text-sm flex items-center gap-1.5"
           >
-            Export Sales
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+            Export Max-Min Excel
           </button>
           <button
             onClick={exportTeamSummary}
@@ -108,28 +149,36 @@ export const Reports: React.FC<ReportsProps> = ({ players, teams, role, onAssign
         </div>
       </div>
 
-      {/* Market Overview Section */}
+      {/* Market Overview Cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
           <p className="text-[10px] uppercase font-black text-slate-400 tracking-wider mb-1">Players Sold</p>
           <p className="text-3xl font-extrabold text-slate-800">{totalSold} <span className="text-sm font-normal text-slate-400">/ {players.length}</span></p>
         </div>
         <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
-          <p className="text-[10px] uppercase font-black text-slate-400 tracking-wider mb-1">Total Spent</p>
-          <p className="text-3xl font-extrabold text-green-600">৳ {totalSpent}</p>
+          <p className="text-[10px] uppercase font-black text-slate-400 tracking-wider mb-1">Total Market Spend</p>
+          <p className="text-3xl font-extrabold text-green-600">৳ {totalSpent.toLocaleString()}</p>
         </div>
         <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
-          <p className="text-[10px] uppercase font-black text-slate-400 tracking-wider mb-1">Available Fund</p>
-          <p className="text-3xl font-extrabold text-therap">৳ {remainingBudget}</p>
+          <p className="text-[10px] uppercase font-black text-slate-400 tracking-wider mb-1">Avg Sold Price</p>
+          <p className="text-3xl font-extrabold text-therap">৳ {averageSoldPrice.toLocaleString()}</p>
         </div>
         <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
-          <p className="text-[10px] uppercase font-black text-slate-400 tracking-wider mb-1">Record Signing</p>
+          <p className="text-[10px] uppercase font-black text-slate-400 tracking-wider mb-1">Highest Sold Price (Max)</p>
           <p className="text-sm font-bold text-slate-800 truncate leading-none mb-1">{mostExpensive ? mostExpensive.name : 'N/A'}</p>
-          <p className="text-xl font-extrabold text-blue-600 leading-none">{mostExpensive ? `৳ ${mostExpensive.soldPrice}` : '-'}</p>
+          <p className="text-xl font-extrabold text-blue-600 leading-none">{mostExpensive ? `৳ ${mostExpensive.soldPrice?.toLocaleString()}` : '-'}</p>
         </div>
       </div>
 
+      {/* View Switcher Tabs */}
       <div className="flex items-center space-x-1 bg-slate-100 p-1 rounded-xl w-fit">
+        <button
+          onClick={() => setReportView('sold_leaderboard')}
+          className={`px-4 py-2 rounded-lg font-bold text-xs uppercase tracking-widest transition flex items-center gap-1.5 ${reportView === 'sold_leaderboard' ? 'bg-white text-therap shadow-sm' : 'text-slate-500 hover:bg-slate-200'}`}
+        >
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path></svg>
+          Sold Prices (Max to Min)
+        </button>
         <button
           onClick={() => setReportView('profiles')}
           className={`px-4 py-2 rounded-lg font-bold text-xs uppercase tracking-widest transition ${reportView === 'profiles' ? 'bg-white text-therap shadow-sm' : 'text-slate-500 hover:bg-slate-200'}`}
@@ -144,7 +193,235 @@ export const Reports: React.FC<ReportsProps> = ({ players, teams, role, onAssign
         </button>
       </div>
 
-      {reportView === 'summary' ? (
+      {/* VIEW 1: Sold Leaderboard (Max to Min) */}
+      {reportView === 'sold_leaderboard' && (
+        <div className="space-y-6">
+          {/* Filters Bar */}
+          <div className="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 flex flex-col md:flex-row gap-4 items-stretch md:items-end justify-between">
+            <div className="flex-1 grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <div>
+                <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Search Player</label>
+                <input
+                  type="text"
+                  placeholder="Name, nickname, dept..."
+                  className="w-full border p-2 rounded-xl text-sm outline-therap"
+                  value={leaderboardSearch}
+                  onChange={e => setLeaderboardSearch(e.target.value)}
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Category</label>
+                <select
+                  className="w-full border p-2 rounded-xl text-sm outline-therap bg-white"
+                  value={leaderboardCategory}
+                  onChange={e => setLeaderboardCategory(e.target.value)}
+                >
+                  <option value="ALL">All Categories</option>
+                  <option value="A">Category A</option>
+                  <option value="B">Category B</option>
+                  <option value="C">Category C</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Team</label>
+                <select
+                  className="w-full border p-2 rounded-xl text-sm outline-therap bg-white"
+                  value={leaderboardTeamId}
+                  onChange={e => setLeaderboardTeamId(e.target.value)}
+                >
+                  <option value="ALL">All Teams</option>
+                  {teams.map(t => (
+                    <option key={t.id} value={t.id}>{t.name}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setSortOrder(prev => prev === 'desc' ? 'asc' : 'desc')}
+                className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl text-xs uppercase tracking-wider transition flex items-center gap-2 border border-slate-200"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 4h13M3 8h9m-9 4h6m4 0l4-4m0 0l4 4m-4-4v12" />
+                </svg>
+                Sort: {sortOrder === 'desc' ? 'Max to Min (Highest First)' : 'Min to Max (Lowest First)'}
+              </button>
+              {(leaderboardSearch || leaderboardCategory !== 'ALL' || leaderboardTeamId !== 'ALL' || sortOrder !== 'desc') && (
+                <button
+                  onClick={() => {
+                    setLeaderboardSearch('');
+                    setLeaderboardCategory('ALL');
+                    setLeaderboardTeamId('ALL');
+                    setSortOrder('desc');
+                  }}
+                  className="px-3 py-2 text-xs font-bold text-slate-500 hover:text-slate-800"
+                >
+                  Reset
+                </button>
+              )}
+            </div>
+          </div>
+
+          {/* Sold Players Table */}
+          <div className="bg-white rounded-3xl shadow-lg border border-slate-200 overflow-hidden">
+            <div className="p-5 border-b border-slate-100 bg-slate-50/50 flex justify-between items-center">
+              <div>
+                <h3 className="font-extrabold text-slate-800 text-lg">Sold Players Price Ranking</h3>
+                <p className="text-xs text-slate-500">Sorted from {sortOrder === 'desc' ? 'Highest (Max) to Lowest (Min)' : 'Lowest (Min) to Highest (Max)'} sold price.</p>
+              </div>
+              <span className="text-xs font-bold bg-blue-100 text-therap px-3 py-1 rounded-full">
+                Showing {filteredSoldPlayers.length} of {soldPlayers.length} Sold Players
+              </span>
+            </div>
+
+            {filteredSoldPlayers.length === 0 ? (
+              <div className="py-20 text-center text-slate-400">
+                <svg className="w-16 h-16 mx-auto mb-3 opacity-20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                <p className="font-bold text-slate-600">No sold players found matching criteria</p>
+                <p className="text-xs text-slate-400 mt-1">Complete player auctions or clear your search filters.</p>
+              </div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full text-left border-collapse">
+                  <thead className="bg-slate-50 text-slate-500 uppercase text-[10px] font-black tracking-widest border-b border-slate-200">
+                    <tr>
+                      <th className="px-6 py-4 text-center w-16">Rank</th>
+                      <th className="px-6 py-4">Player</th>
+                      <th className="px-6 py-4">Position & Cat</th>
+                      <th className="px-6 py-4">Bought By Team</th>
+                      <th className="px-6 py-4 text-right">Base Price</th>
+                      <th className="px-6 py-4 text-right">Sold Price</th>
+                      <th className="px-6 py-4 text-right">Price Growth</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100">
+                    {filteredSoldPlayers.map((player, idx) => {
+                      const team = teams.find(t => t.id === player.teamId);
+                      const basePrice = player.basePrice || 0;
+                      const soldPrice = player.soldPrice || 0;
+                      const increase = soldPrice - basePrice;
+                      const growthPct = basePrice > 0 ? Math.round((increase / basePrice) * 100) : 0;
+                      
+                      // Calculate original overall rank (before search filtering)
+                      const overallRank = sortedSoldPlayers.findIndex(p => p.id === player.id) + 1;
+
+                      return (
+                        <tr key={player.id} className="hover:bg-slate-50/80 transition group">
+                          {/* Rank */}
+                          <td className="px-6 py-4 text-center font-black text-sm">
+                            {overallRank === 1 ? (
+                              <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-amber-100 text-amber-800 border border-amber-300 font-extrabold shadow-sm">
+                                🥇 1
+                              </span>
+                            ) : overallRank === 2 ? (
+                              <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-slate-200 text-slate-700 border border-slate-300 font-extrabold shadow-sm">
+                                🥈 2
+                              </span>
+                            ) : overallRank === 3 ? (
+                              <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-amber-700/10 text-amber-900 border border-amber-700/20 font-extrabold shadow-sm">
+                                🥉 3
+                              </span>
+                            ) : (
+                              <span className="text-slate-400 font-bold">#{overallRank}</span>
+                            )}
+                          </td>
+
+                          {/* Player Info */}
+                          <td className="px-6 py-4">
+                            <div className="flex items-center space-x-3">
+                              <div className="w-12 h-12 rounded-xl bg-slate-100 border border-slate-200 overflow-hidden shrink-0 shadow-sm relative">
+                                {player.photoUrl ? (
+                                  <img src={player.photoUrl} alt={player.name} className="w-full h-full object-cover" />
+                                ) : (
+                                  <div className="w-full h-full flex items-center justify-center text-slate-300 font-black text-lg">
+                                    {player.name.charAt(0)}
+                                  </div>
+                                )}
+                              </div>
+                              <div>
+                                <p className="font-bold text-slate-800 text-base leading-snug flex items-center gap-1.5">
+                                  {player.name}
+                                  {player.nickname && <span className="text-xs text-slate-400 font-normal">({player.nickname})</span>}
+                                </p>
+                                <p className="text-[10px] text-slate-400 font-bold uppercase">{player.department || 'BBFF'}</p>
+                              </div>
+                            </div>
+                          </td>
+
+                          {/* Position & Category */}
+                          <td className="px-6 py-4">
+                            <div className="space-y-1">
+                              <p className="text-xs font-bold text-slate-700">{player.position}</p>
+                              <span className={`inline-block text-[9px] font-black px-2 py-0.5 rounded uppercase tracking-wider ${
+                                player.category === 'A' ? 'bg-yellow-100 text-yellow-800 border border-yellow-300' :
+                                player.category === 'B' ? 'bg-slate-100 text-slate-700 border border-slate-300' :
+                                'bg-orange-100 text-orange-800 border border-orange-300'
+                              }`}>
+                                CAT {player.category}
+                              </span>
+                            </div>
+                          </td>
+
+                          {/* Team */}
+                          <td className="px-6 py-4">
+                            {team ? (
+                              <div className="flex items-center space-x-2.5">
+                                {team.logoUrl ? (
+                                  <img src={team.logoUrl} alt={team.name} className="w-7 h-7 object-contain rounded" />
+                                ) : (
+                                  <div className="w-7 h-7 rounded bg-blue-100 text-therap font-black text-xs flex items-center justify-center">
+                                    {team.name.charAt(0)}
+                                  </div>
+                                )}
+                                <div>
+                                  <p className="font-bold text-slate-800 text-xs">{team.name}</p>
+                                  <p className="text-[9px] text-slate-400 font-medium">Mgr: {team.manager}</p>
+                                </div>
+                              </div>
+                            ) : (
+                              <span className="text-xs text-slate-400 font-medium">Unassigned</span>
+                            )}
+                          </td>
+
+                          {/* Base Price */}
+                          <td className="px-6 py-4 text-right font-medium text-slate-500 text-sm">
+                            ৳ {basePrice.toLocaleString()}
+                          </td>
+
+                          {/* Sold Price */}
+                          <td className="px-6 py-4 text-right">
+                            <span className="text-lg font-black text-green-600">
+                              ৳ {soldPrice.toLocaleString()}
+                            </span>
+                          </td>
+
+                          {/* Growth */}
+                          <td className="px-6 py-4 text-right">
+                            <div className="inline-flex flex-col items-end">
+                              <span className={`text-xs font-black ${increase > 0 ? 'text-emerald-600' : 'text-slate-400'}`}>
+                                {increase > 0 ? `+৳ ${increase.toLocaleString()}` : 'Base Price'}
+                              </span>
+                              {increase > 0 && (
+                                <span className="text-[9px] font-bold text-emerald-500 bg-emerald-50 px-1.5 py-0.5 rounded mt-0.5">
+                                  +{growthPct}%
+                                </span>
+                              )}
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* VIEW 2: Financial Summary */}
+      {reportView === 'summary' && (
         <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
           <table className="w-full text-left">
             <thead className="bg-slate-50 text-slate-500 uppercase text-[10px] font-black tracking-widest border-b">
@@ -187,7 +464,10 @@ export const Reports: React.FC<ReportsProps> = ({ players, teams, role, onAssign
             </tbody>
           </table>
         </div>
-      ) : (
+      )}
+
+      {/* VIEW 3: Squad Profiles */}
+      {reportView === 'profiles' && (
         <React.Fragment>
           {/* Team Filter Bar */}
           <div className="flex overflow-x-auto gap-2 pb-2 mb-6 scrollbar-hide no-scrollbar -mx-4 px-4 md:mx-0 md:px-0">
@@ -216,7 +496,6 @@ export const Reports: React.FC<ReportsProps> = ({ players, teams, role, onAssign
 
               return (
                 <div key={team.id} className="bg-white rounded-3xl shadow-xl border border-slate-200 overflow-hidden group hover:border-therap/20 transition-all">
-                  {/* Updated Header with Light Background and Dark Font */}
                   <div className="bg-slate-50 p-8 border-b border-slate-100 relative overflow-hidden min-h-[160px]">
                     <div className="absolute right-[-20px] top-[-20px] opacity-[0.03] rotate-12 select-none pointer-events-none text-slate-900">
                       {team.logoUrl ? <img src={team.logoUrl} className="w-64 h-64 object-contain grayscale" /> : <div className="text-9xl font-black">{team.name.charAt(0)}</div>}
@@ -391,7 +670,7 @@ export const Reports: React.FC<ReportsProps> = ({ players, teams, role, onAssign
         }}
       />
 
-      {/* Audit Checklist Display */}
+      {/* Quality Assurance Footer */}
       <div className="bg-slate-900 text-white rounded-3xl p-8 relative overflow-hidden">
         <div className="absolute right-0 top-0 w-64 h-64 bg-therap rounded-full blur-[100px] opacity-20 -mr-32 -mt-32"></div>
         <h3 className="text-xl font-bold mb-6 flex items-center uppercase tracking-tighter relative z-10">
