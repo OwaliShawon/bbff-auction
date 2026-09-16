@@ -88,7 +88,21 @@ export interface AuctionLogEntry {
   teamName?: string; // For BID, SOLD
 }
 
+export interface Season {
+  id: string; // e.g. "season-1-2026", "season-2-2027"
+  name: string; // e.g. "Season 1 - 2026", "Season 2 - 2027"
+  year: number; // e.g. 2026, 2027
+  isArchived: boolean;
+  createdAt: number;
+  players: Player[];
+  teams: Team[];
+  auction: AuctionState;
+  auctionLog: AuctionLogEntry[];
+}
+
 export interface AppData {
+  currentSeasonId: string;
+  seasons: Season[];
   players: Player[];
   teams: Team[];
   auction: AuctionState;

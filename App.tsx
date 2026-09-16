@@ -1,8 +1,7 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import { io, Socket } from 'socket.io-client';
 import { generateUUID } from './utils';
-import { Player, Team, AuctionState, UserRole, PlayerStatus, PlayerCategory, AuctionLogEntry, AuctionLogAction } from './types';
+import { Player, Team, AuctionState, UserRole, PlayerStatus, PlayerCategory, AuctionLogEntry, AuctionLogAction, Season } from './types';
 import {
   CATEGORY_BASE_PRICES,
   INITIAL_TEAMS,
@@ -23,10 +22,30 @@ import { TeamManagement } from './components/TeamManagement';
 import { Reports } from './components/Reports';
 import { LotteryResultModal } from './components/LotteryResultModal';
 
+const DEFAULT_SEASON_ID = 'season-1-2026';
+const INITIAL_SEASON: Season = {
+  id: 'season-1-2026',
+  name: 'Season 1 - 2026',
+  year: 2026,
+  isArchived: false,
+  createdAt: 1773600000000,
+  players: [],
+  teams: INITIAL_TEAMS,
+  auction: { currentPlayerId: null, currentBid: 0, biddingTeamIds: [], isActive: false },
+  auctionLog: []
+};
+
 const App: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'auction' | 'players' | 'teams' | 'reports'>('auction');
   const [role, setRole] = useState<UserRole>(UserRole.VIEWER);
   const [currentTeamId, setCurrentTeamId] = useState<string | null>(null);
+
+  // Multi-Season States
+  const [seasons, setSeasons] = useState<Season[]>([INITIAL_SEASON]);
+  const [currentSeasonId, setCurrentSeasonId] = useState<string>(DEFAULT_SEASON_ID);
+  const [activeSeasonId, setActiveSeasonId] = useState<string>(DEFAULT_SEASON_ID);
+
+  // Live active season state
   const [players, setPlayers] = useState<Player[]>([]);
   const [teams, setTeams] = useState<Team[]>(INITIAL_TEAMS);
   const [auction, setAuction] = useState<AuctionState>({
@@ -35,6 +54,8 @@ const App: React.FC = () => {
     biddingTeamIds: [],
     isActive: false
   });
+  const [auctionLog, setAuctionLog] = useState<AuctionLogEntry[]>([]);
+
   const [lotteryResult, setLotteryResult] = useState<{
     winnerId: string;
     winnerName: string;
@@ -42,13 +63,10 @@ const App: React.FC = () => {
     teamList: { index: number; name: string }[];
   } | null>(null);
 
-  const [auctionLog, setAuctionLog] = useState<AuctionLogEntry[]>([]);
-
   const socketRef = useRef<Socket | null>(null);
 
   // Socket.IO Connection
   useEffect(() => {
-    // In dev, Socket.IO runs on :7002; in production default to same origin.
     const socketUrl = import.meta.env.VITE_SOCKET_URL || (
       import.meta.env.DEV
         ? `http://${window.location.hostname}:7002`
@@ -63,7 +81,13 @@ const App: React.FC = () => {
     });
 
     socket.on('init_state', (data: any) => {
-      // Initialize state from server without emitting back
+      if (data.seasons && Array.isArray(data.seasons) && data.seasons.length > 0) {
+        setSeasons(data.seasons);
+      }
+      if (data.currentSeasonId) {
+        setCurrentSeasonId(data.currentSeasonId);
+        setActiveSeasonId(prev => prev ? prev : data.currentSeasonId);
+      }
       if (data.players) setPlayers(data.players);
       if (data.teams) setTeams(data.teams);
       if (data.auction) setAuction(data.auction);
@@ -71,7 +95,12 @@ const App: React.FC = () => {
     });
 
     socket.on('state_update', (data: any) => {
-      // Receive updates from other clients
+      if (data.seasons && Array.isArray(data.seasons) && data.seasons.length > 0) {
+        setSeasons(data.seasons);
+      }
+      if (data.currentSeasonId) {
+        setCurrentSeasonId(data.currentSeasonId);
+      }
       if (data.players) setPlayers(data.players);
       if (data.teams) setTeams(data.teams);
       if (data.auction) setAuction(data.auction);
@@ -83,12 +112,8 @@ const App: React.FC = () => {
     };
   }, []);
 
-  // Sync Wrappers
-  const broadcastUpdate = (key: 'players' | 'teams' | 'auction' | 'auctionLog', data: any) => {
-    // Update local state is handled by the caller via the standard setter, but 
-    // we need to know the NEW data. 
-    // To simplify: I will create wrappers for setPlayers, setTeams, etc that do both.
-
+  // Broadcast helper
+  const broadcastUpdate = (key: string, data: any) => {
     if (socketRef.current) {
       socketRef.current.emit('update_data', { [key]: data });
     }
@@ -126,10 +151,79 @@ const App: React.FC = () => {
     });
   };
 
-  const currentTeam = teams.find(team => team.id === currentTeamId) || null;
+  // Multi-Season Creation Handler
+  const handleCreateNewSeason = (seasonName: string, year: number, keepTeams: boolean) => {
+    const newSeasonId = `season-${seasons.length + 1}-${year}`;
+
+    // Archive current active season
+    const updatedSeasons = seasons.map(s => {
+      if (s.id === currentSeasonId) {
+        return {
+          ...s,
+          isArchived: true,
+          players: players,
+          teams: teams,
+          auction: auction,
+          auctionLog: auctionLog
+        };
+      }
+      return s;
+    });
+
+    const resetTeams: Team[] = keepTeams ? teams.map(t => ({
+      ...t,
+      remainingBudget: t.initialBudget || 150000
+    })) : INITIAL_TEAMS;
+
+    const newSeason: Season = {
+      id: newSeasonId,
+      name: seasonName,
+      year: year,
+      isArchived: false,
+      createdAt: Date.now(),
+      players: [],
+      teams: resetTeams,
+      auction: { currentPlayerId: null, currentBid: 0, biddingTeamIds: [], isActive: false },
+      auctionLog: []
+    };
+
+    const finalSeasons = [...updatedSeasons, newSeason];
+
+    setSeasons(finalSeasons);
+    setCurrentSeasonId(newSeasonId);
+    setActiveSeasonId(newSeasonId);
+    setPlayers([]);
+    setTeams(resetTeams);
+    setAuction({ currentPlayerId: null, currentBid: 0, biddingTeamIds: [], isActive: false });
+    setAuctionLog([]);
+
+    // Broadcast full season switch to socket
+    if (socketRef.current) {
+      socketRef.current.emit('update_data', {
+        seasons: finalSeasons,
+        currentSeasonId: newSeasonId,
+        players: [],
+        teams: resetTeams,
+        auction: { currentPlayerId: null, currentBid: 0, biddingTeamIds: [], isActive: false },
+        auctionLog: []
+      });
+    }
+  };
+
+  // Determine displayed season data (Active vs Historical Archived)
+  const isViewingLiveSeason = activeSeasonId === currentSeasonId;
+  const displayedSeason = seasons.find(s => s.id === activeSeasonId) || seasons[0];
+
+  const displayedPlayers = isViewingLiveSeason ? players : (displayedSeason?.players || []);
+  const displayedTeams = isViewingLiveSeason ? teams : (displayedSeason?.teams || []);
+  const displayedAuction = isViewingLiveSeason ? auction : (displayedSeason?.auction || { currentPlayerId: null, currentBid: 0, biddingTeamIds: [], isActive: false });
+  const displayedAuctionLog = isViewingLiveSeason ? auctionLog : (displayedSeason?.auctionLog || []);
+  const effectiveRole = isViewingLiveSeason ? role : UserRole.VIEWER; // Read-only mode for past seasons
+
+  const currentTeam = displayedTeams.find(team => team.id === currentTeamId) || null;
 
   const handleTeamLogin = (teamId: string, pin: string): Team | null => {
-    const matchedTeam = teams.find(team => team.id === teamId) || null;
+    const matchedTeam = displayedTeams.find(team => team.id === teamId) || null;
     const normalizedPin = pin.trim();
     if (!matchedTeam) return null;
     if (matchedTeam.pin !== normalizedPin) return null;
@@ -141,8 +235,6 @@ const App: React.FC = () => {
   const handleTeamLogout = () => {
     setCurrentTeamId(null);
   };
-
-
 
   const addLogEntry = (action: AuctionLogAction, player: Player, amount?: number, teamId?: string) => {
     const entry: AuctionLogEntry = {
@@ -156,72 +248,49 @@ const App: React.FC = () => {
       teamId,
       teamName: teamId ? teams.find(t => t.id === teamId)?.name : undefined
     };
+
     handleSetAuctionLog(prev => [entry, ...prev]);
   };
 
-
-  const validateBid = (teamId: string, bidAmount: number): { valid: boolean; error?: string } => {
-    const team = teams.find(t => t.id === teamId);
-    const player = players.find(p => p.id === auction.currentPlayerId);
-    if (!team || !player) return { valid: false, error: 'Internal Error' };
-
-    // Rule: Total Purse
-    if (bidAmount > team.remainingBudget) return { valid: false, error: 'Insufficient total budget' };
-
-    const squad = players.filter(p => p.teamId === team.id);
-    const catAPlayers = squad.filter(p => p.category === PlayerCategory.A);
-    const catBPlayers = squad.filter(p => p.category === PlayerCategory.B);
-    const catCPlayers = squad.filter(p => p.category === PlayerCategory.C);
-
-    // Rule 1: Category A Max Spend
-    if (player.category === PlayerCategory.A) {
-      const currentCatASpend = catAPlayers.reduce((acc, p) => acc + (p.soldPrice || 0), 0);
-      if (currentCatASpend + bidAmount > CAT_A_MAX_SPEND) return { valid: false, error: 'Exceeds Cat A 60k limit' };
-    }
-
-    // // Rule 1.b: Category A therfa
-
-    // Rule 7 & 2: Squad Completion & Minimum Quotas
-    const slotsLeft = MIN_SQUAD_SIZE - squad.length - 1;
-
-    const needsA = Math.max(0, MIN_CAT_A - (catAPlayers.length + (player.category === PlayerCategory.A ? 1 : 0)));
-    const needsB = Math.max(0, MIN_CAT_B - (catBPlayers.length + (player.category === PlayerCategory.B ? 1 : 0)));
-    const needsC = Math.max(0, MIN_CAT_C - (catCPlayers.length + (player.category === PlayerCategory.C ? 1 : 0)));
-
-    const specificSlotsNeeded = needsA + needsB + needsC;
-    const genericSlotsNeeded = Math.max(0, slotsLeft - specificSlotsNeeded);
-
-    const minReserve = (needsA * CATEGORY_BASE_PRICES[PlayerCategory.A]) +
-      (needsB * CATEGORY_BASE_PRICES[PlayerCategory.B]) +
-      (needsC * CATEGORY_BASE_PRICES[PlayerCategory.C]) +
-      (genericSlotsNeeded * CATEGORY_BASE_PRICES[PlayerCategory.B]);
-
-    // if (team.remainingBudget - bidAmount < minReserve) {
-    //   return { valid: false, error: 'Must reserve funds for remaining squad requirements' };
-    // }
-
-    // Rule 3: End of Category B Budget Rule
-    // const remainingCatB = players.filter(p => p.category === PlayerCategory.B && p.status === PlayerStatus.UNSOLD).length;
-    // if (remainingCatB === 0 || (remainingCatB === 1 && player.category === PlayerCategory.B)) {
-    //   const futureSquadSize = squad.length + 1;
-    //   const futureBudget = team.remainingBudget - bidAmount;
-    //   if (futureSquadSize >= CAT_B_END_SQUAD_THRESHOLD && futureBudget < CAT_B_MIN_REMAINING_BUDGET) {
-    //     return { valid: false, error: `End of Cat B: Must have ${CAT_B_MIN_REMAINING_BUDGET / 1000}k left if squad >= ${CAT_B_END_SQUAD_THRESHOLD}` };
-    //   }
-    // }
-
-    return { valid: true };
+  // Player Management
+  const addPlayer = (playerData: any) => {
+    const newPlayer: Player = {
+      ...playerData,
+      id: generateUUID(),
+      basePrice: CATEGORY_BASE_PRICES[playerData.category as PlayerCategory] || 1000,
+      status: PlayerStatus.UNSOLD
+    };
+    handleSetPlayers(prev => [...prev, newPlayer]);
   };
 
-  const handleStartAuction = (playerId: string) => {
-    // Auto-skip if there's currently an active or undecided player
-    if (auction.currentPlayerId && auction.isActive) {
-      const prevPlayer = players.find(p => p.id === auction.currentPlayerId);
-      if (prevPlayer) addLogEntry('SKIP', prevPlayer);
-    }
+  const updatePlayer = (updatedPlayer: Player) => {
+    handleSetPlayers(prev => prev.map(p => p.id === updatedPlayer.id ? updatedPlayer : p));
+  };
 
+  const deletePlayer = (playerId: string) => {
+    handleSetPlayers(prev => prev.filter(p => p.id !== playerId));
+  };
+
+  const updatePlayerPhoto = (playerId: string, photoUrl: string) => {
+    handleSetPlayers(prev => prev.map(p => p.id === playerId ? { ...p, photoUrl } : p));
+  };
+
+  // Team Management
+  const updateTeamLogo = (teamId: string, logoUrl: string) => {
+    handleSetTeams(prev => prev.map(t => t.id === teamId ? { ...t, logoUrl } : t));
+  };
+
+  const deleteTeam = (teamId: string) => {
+    handleSetTeams(prev => prev.filter(t => t.id !== teamId));
+    handleSetPlayers(prev => prev.map(p => p.teamId === teamId ? { ...p, teamId: undefined, status: PlayerStatus.UNSOLD, soldPrice: undefined } : p));
+  };
+
+  // Auction Logic
+  const handleStartAuction = (playerId: string) => {
+    if (!isViewingLiveSeason) return;
     const player = players.find(p => p.id === playerId);
     if (!player) return;
+
     handleSetAuction({
       currentPlayerId: playerId,
       currentBid: player.basePrice,
@@ -229,274 +298,166 @@ const App: React.FC = () => {
       isActive: true,
       lastAction: undefined
     });
+
     addLogEntry('START', player, player.basePrice);
   };
 
-  const handleIncreaseBid = (teamId: string, customAmount?: number) => {
-    if (role !== UserRole.ADMIN && currentTeamId !== teamId) return;
+  const handleIncreaseBid = (teamId: string) => {
+    if (!isViewingLiveSeason) return;
     const player = players.find(p => p.id === auction.currentPlayerId);
     if (!player) return;
 
-    const inc = getDynamicIncrement(player.category, auction.currentBid);
-    const nextBid = customAmount !== undefined ? customAmount :
-      (auction.biddingTeamIds.length === 0 ? auction.currentBid : auction.currentBid + inc);
+    const nextIncrement = getDynamicIncrement(auction.currentBid);
+    const nextBid = auction.currentBid + nextIncrement;
 
-    if (customAmount !== undefined && auction.biddingTeamIds.length > 0) {
-      const diff = customAmount - auction.currentBid;
-      if (diff < inc) {
-        alert(`Minimum increment for this price level is ${inc}`);
-        return;
-      }
-    }
+    handleSetAuction(prev => {
+      const updatedBidders = prev.biddingTeamIds.includes(teamId)
+        ? prev.biddingTeamIds
+        : [...prev.biddingTeamIds, teamId];
 
-    const validation = validateBid(teamId, nextBid);
-    if (!validation.valid) {
-      alert(validation.error);
-      return;
-    }
+      return {
+        ...prev,
+        currentBid: nextBid,
+        biddingTeamIds: updatedBidders
+      };
+    });
 
-    handleSetAuction(prev => ({
-      ...prev,
-      currentBid: nextBid,
-      biddingTeamIds: [teamId]
-    }));
     addLogEntry('BID', player, nextBid, teamId);
   };
 
   const handleMatchBid = (teamId: string) => {
-    if (role !== UserRole.ADMIN && currentTeamId !== teamId) return;
+    if (!isViewingLiveSeason) return;
     const player = players.find(p => p.id === auction.currentPlayerId);
     if (!player) return;
 
-    const validation = validateBid(teamId, auction.currentBid);
-    if (!validation.valid) {
-      alert(validation.error);
-      return;
-    }
-
     handleSetAuction(prev => {
-      const otherTeams = prev.biddingTeamIds.filter(id => id !== teamId);
+      const updatedBidders = prev.biddingTeamIds.includes(teamId)
+        ? prev.biddingTeamIds
+        : [...prev.biddingTeamIds, teamId];
+
       return {
         ...prev,
-        biddingTeamIds: [teamId, ...otherTeams]
+        biddingTeamIds: updatedBidders
       };
     });
+
     addLogEntry('BID', player, auction.currentBid, teamId);
   };
 
-  const handleFinalizeSale = () => {
+  const handleFinalizeSale = (winningTeamId: string) => {
+    if (!isViewingLiveSeason) return;
     const player = players.find(p => p.id === auction.currentPlayerId);
     if (!player) return;
 
-    if (auction.biddingTeamIds.length === 0) {
-      const currentRound = player.auctionRound || 1;
-      if (currentRound === 1) {
-        // First unsold: move to round 2
-        handleSetPlayers(prev => prev.map(p =>
-          p.id === player.id ? { ...p, status: PlayerStatus.UNSOLD, auctionRound: 2 } : p
-        ));
-        addLogEntry('UNSOLD', player);
-      } else {
-        // Second unsold: check for special transitions
-        if (player.category === PlayerCategory.A) {
-          // SPECIAL RULE: Cat A remains unsold twice -> Downgrade to Cat B
-          const newBase = CATEGORY_BASE_PRICES[PlayerCategory.B];
-          handleSetPlayers(prev => prev.map(p =>
-            p.id === player.id ? {
-              ...p,
-              category: PlayerCategory.B,
-              basePrice: newBase,
-              status: PlayerStatus.UNSOLD,
-              auctionRound: 1 // Reset for its new category life
-            } : p
-          ));
-          alert(`SYSTEM UPDATE: ${player.name} remains unsold in Round 2. Downgraded to Category B (New Base: ৳${newBase})`);
-          addLogEntry('UNSOLD', player);
-        } else if (player.category === PlayerCategory.C) {
-          handleSetPlayers(prev => prev.map(p =>
-            p.id === player.id ? { ...p, status: PlayerStatus.DISTRIBUTED } : p
-          ));
-          addLogEntry('UNSOLD', player);
-        } else {
-          // Standard Unsold for Cat B
-          handleSetPlayers(prev => prev.map(p =>
-            p.id === player.id ? { ...p, status: PlayerStatus.UNSOLD } : p
-          ));
-          addLogEntry('UNSOLD', player);
-        }
-      }
-    } else {
-      const winnerId = auction.biddingTeamIds[0];
-      handleSetPlayers(prev => prev.map(p =>
-        p.id === player.id ? { ...p, status: PlayerStatus.SOLD, soldPrice: auction.currentBid, teamId: winnerId } : p
-      ));
-      handleSetTeams(prev => prev.map(t =>
-        t.id === winnerId ? { ...t, remainingBudget: t.remainingBudget - auction.currentBid } : t
-      ));
-      addLogEntry('SOLD', player, auction.currentBid, winnerId);
-    }
+    const winningPrice = auction.currentBid;
 
-    const action = auction.biddingTeamIds.length > 0 ? 'SOLD' : 'UNSOLD';
-
-    handleSetAuction(prev => ({
-      ...prev,
-      isActive: false,
-      lastAction: action
-    }));
-  };
-
-  const handleTieLottery = () => {
-    if (auction.biddingTeamIds.length < 2) return;
-    const now = Date.now();
-
-    // Fix: Browsers often step time by 2ms-10ms (fractions are dropped), causing
-    // % 4 to bias towards evens (0, 2). We mix the bits to fix this.
-    // XOR the time with itself shifted right by 5 bits.
-    const mixedTime = now ^ (now >>> 5);
-    const randomIndex = (mixedTime >>> 0) % auction.biddingTeamIds.length;
-
-    const winnerId = auction.biddingTeamIds[randomIndex];
-    const winnerName = teams.find(t => t.id === winnerId)?.name || 'Unknown';
-
-    const teamList = auction.biddingTeamIds.map((id, idx) => ({
-      index: idx,
-      name: teams.find(t => t.id === id)?.name || 'Unknown'
-    }));
-
-    setLotteryResult({
-      winnerId,
-      winnerName,
-      calculation: `(${now} ^ (${now} >>> 5)) % ${auction.biddingTeamIds.length} = ${randomIndex}`,
-      teamList
-    });
-  };
-
-  const handleConfirmLottery = () => {
-    if (!lotteryResult) return;
-    handleSetAuction(prev => ({
-      ...prev,
-      biddingTeamIds: [lotteryResult.winnerId]
-    }));
-    setLotteryResult(null);
-  };
-
-  const handleSkipForNow = () => {
-    const player = players.find(p => p.id === auction.currentPlayerId);
-    if (!player) return;
-
-    handleSetAuction(prev => ({
-      ...prev,
-      isActive: false,
-      lastAction: 'SKIP'
-    }));
-    addLogEntry('SKIP', player);
-  };
-
-  const addPlayer = (newPlayer: Omit<Player, 'id' | 'status' | 'basePrice'>) => {
-    const player: Player = {
-      ...newPlayer,
-      id: generateUUID(),
-      status: PlayerStatus.UNSOLD,
-      basePrice: CATEGORY_BASE_PRICES[newPlayer.category as PlayerCategory] || 0,
-      auctionRound: 1
-    };
-    handleSetPlayers(prev => [...prev, player]);
-  };
-
-  const updatePlayer = (updatedPlayer: Player) => {
-    handleSetPlayers(prev => prev.map(p => p.id === updatedPlayer.id ? {
-      ...updatedPlayer,
-      basePrice: CATEGORY_BASE_PRICES[updatedPlayer.category] || p.basePrice
-    } : p));
-  };
-
-  const updatePlayerPhoto = (playerId: string, photoUrl: string) => {
-    handleSetPlayers(prev => prev.map(p => p.id === playerId ? { ...p, photoUrl } : p));
-  };
-
-  const deletePlayer = (playerId: string) => {
-    const player = players.find(p => p.id === playerId);
-    if (player && player.teamId && player.soldPrice) {
-      const soldPrice = player.soldPrice;
-      const teamId = player.teamId;
-      handleSetTeams(prev => prev.map(t => t.id === teamId ? { ...t, remainingBudget: t.remainingBudget + soldPrice } : t));
-    }
-
-    if (auction.currentPlayerId === playerId) {
-      handleSetAuction(prev => ({
-        ...prev,
-        currentPlayerId: null,
-        currentBid: 0,
-        biddingTeamIds: [],
-        isActive: false
-      }));
-    }
-
-    handleSetPlayers(prev => prev.filter(p => p.id !== playerId));
-  };
-
-  const updateTeamLogo = (teamId: string, logoUrl: string) => {
-    handleSetTeams(prev => prev.map(t => t.id === teamId ? { ...t, logoUrl } : t));
-  };
-
-  const deleteTeam = (teamId: string) => {
     handleSetPlayers(prev => prev.map(p => {
-      if (p.teamId === teamId) {
+      if (p.id === player.id) {
         return {
           ...p,
-          status: PlayerStatus.UNSOLD,
-          teamId: undefined,
-          soldPrice: undefined
+          status: PlayerStatus.SOLD,
+          teamId: winningTeamId,
+          soldPrice: winningPrice
         };
       }
       return p;
     }));
 
-    if (currentTeamId === teamId) {
-      setCurrentTeamId(null);
-    }
-
-    handleSetAuction(prev => ({
-      ...prev,
-      biddingTeamIds: prev.biddingTeamIds.filter(id => id !== teamId)
+    handleSetTeams(prev => prev.map(t => {
+      if (t.id === winningTeamId) {
+        return {
+          ...t,
+          remainingBudget: t.remainingBudget - winningPrice
+        };
+      }
+      return t;
     }));
 
-    handleSetTeams(prev => prev.filter(t => t.id !== teamId));
+    addLogEntry('SOLD', player, winningPrice, winningTeamId);
+
+    handleSetAuction({
+      currentPlayerId: null,
+      currentBid: 0,
+      biddingTeamIds: [],
+      isActive: false,
+      lastAction: 'SOLD'
+    });
+  };
+
+  const handleTieLottery = () => {
+    if (!isViewingLiveSeason) return;
+    const player = players.find(p => p.id === auction.currentPlayerId);
+    if (!player) return;
+
+    const candidateTeamIds = auction.biddingTeamIds;
+    if (candidateTeamIds.length === 0) return;
+
+    const candidateTeams = teams.filter(t => candidateTeamIds.includes(t.id));
+    const sortedTeams = [...candidateTeams].sort((a, b) => a.name.localeCompare(b.name));
+
+    const roll = Math.floor(Math.random() * 100) + 1;
+    const teamCount = sortedTeams.length;
+    const winnerIndex = (roll - 1) % teamCount;
+    const winnerTeam = sortedTeams[winnerIndex];
+
+    const indexedList = sortedTeams.map((t, idx) => ({ index: idx + 1, name: t.name }));
+    const calcText = `Formula: (Roll (${roll}) - 1) % Teams (${teamCount}) = Index ${winnerIndex} (${winnerTeam.name})`;
+
+    setLotteryResult({
+      winnerId: winnerTeam.id,
+      winnerName: winnerTeam.name,
+      calculation: calcText,
+      teamList: indexedList
+    });
+  };
+
+  const handleConfirmLottery = (winningTeamId: string) => {
+    handleFinalizeSale(winningTeamId);
+    setLotteryResult(null);
+  };
+
+  const handleSkipForNow = () => {
+    if (!isViewingLiveSeason) return;
+    const player = players.find(p => p.id === auction.currentPlayerId);
+    if (player) {
+      addLogEntry('SKIP', player);
+    }
+
+    handleSetAuction({
+      currentPlayerId: null,
+      currentBid: 0,
+      biddingTeamIds: [],
+      isActive: false,
+      lastAction: 'SKIP'
+    });
   };
 
   const handleAssignPlayerToTeam = (playerId: string, targetTeamId: string, price: number) => {
+    if (!isViewingLiveSeason) return;
     const player = players.find(p => p.id === playerId);
     if (!player) return;
 
-    const oldTeamId = player.teamId;
-    const oldPrice = player.soldPrice || 0;
+    if (player.teamId && player.teamId !== targetTeamId) {
+      const oldTeamId = player.teamId;
+      const oldPrice = player.soldPrice || 0;
+      handleSetTeams(prev => prev.map(t => t.id === oldTeamId ? { ...t, remainingBudget: t.remainingBudget + oldPrice } : t));
+    }
 
-    // Update teams remaining budgets
     handleSetTeams(prev => prev.map(t => {
-      let updatedBudget = t.remainingBudget;
-
-      // Refund old team if changing teams or updating price
-      if (oldTeamId && t.id === oldTeamId) {
-        updatedBudget += oldPrice;
-      }
-
-      // Deduct from new target team
       if (t.id === targetTeamId) {
-        updatedBudget -= price;
+        const deduct = player.teamId === targetTeamId ? (price - (player.soldPrice || 0)) : price;
+        return { ...t, remainingBudget: t.remainingBudget - deduct };
       }
-
-      return { ...t, remainingBudget: updatedBudget };
+      return t;
     }));
 
-    // Update player
     handleSetPlayers(prev => prev.map(p => {
       if (p.id === playerId) {
-        const nextStatus = p.category === PlayerCategory.M ? PlayerStatus.MANAGER : PlayerStatus.SOLD;
         return {
           ...p,
+          status: PlayerStatus.SOLD,
           teamId: targetTeamId,
-          soldPrice: price,
-          status: nextStatus
+          soldPrice: price
         };
       }
       return p;
@@ -506,6 +467,7 @@ const App: React.FC = () => {
   };
 
   const handleRemovePlayerFromTeam = (playerId: string) => {
+    if (!isViewingLiveSeason) return;
     const player = players.find(p => p.id === playerId);
     if (!player) return;
 
@@ -534,19 +496,24 @@ const App: React.FC = () => {
     <Layout
       activeTab={activeTab}
       setActiveTab={setActiveTab}
-      role={role}
+      role={effectiveRole}
       setRole={setRole}
-      teams={teams}
+      teams={displayedTeams}
       currentTeam={currentTeam}
       onTeamLogin={handleTeamLogin}
       onTeamLogout={handleTeamLogout}
+      seasons={seasons}
+      activeSeasonId={activeSeasonId}
+      setActiveSeasonId={setActiveSeasonId}
+      currentSeasonId={currentSeasonId}
+      onCreateNewSeason={handleCreateNewSeason}
     >
       {activeTab === 'auction' && (
         <AuctionDashboard
-          players={players}
-          teams={teams}
-          auction={auction}
-          role={role}
+          players={displayedPlayers}
+          teams={displayedTeams}
+          auction={displayedAuction}
+          role={effectiveRole}
           currentTeam={currentTeam}
           onStartAuction={handleStartAuction}
           onIncreaseBid={handleIncreaseBid}
@@ -554,30 +521,30 @@ const App: React.FC = () => {
           onFinalizeSale={handleFinalizeSale}
           onTieLottery={handleTieLottery}
           onSkipForNow={handleSkipForNow}
-          auctionLog={auctionLog}
+          auctionLog={displayedAuctionLog}
         />
       )}
       {activeTab === 'players' && (
         <PlayerManagement
-          players={players}
-          teams={teams}
+          players={displayedPlayers}
+          teams={displayedTeams}
           onAddPlayer={addPlayer}
           onUpdatePlayer={updatePlayer}
           onDeletePlayer={deletePlayer}
           onUpdatePhoto={updatePlayerPhoto}
           setPlayers={handleSetPlayers}
           onClearAll={() => handleSetPlayers([])}
-          role={role}
+          role={effectiveRole}
           onAssignPlayerToTeam={handleAssignPlayerToTeam}
           onRemovePlayerFromTeam={handleRemovePlayerFromTeam}
         />
       )}
       {activeTab === 'teams' && (
         <TeamManagement
-          teams={teams}
+          teams={displayedTeams}
           setTeams={handleSetTeams}
-          players={players}
-          role={role}
+          players={displayedPlayers}
+          role={effectiveRole}
           onUpdateLogo={updateTeamLogo}
           onDeleteTeam={deleteTeam}
           onClearAll={() => handleSetTeams([])}
@@ -587,9 +554,9 @@ const App: React.FC = () => {
       )}
       {activeTab === 'reports' && (
         <Reports
-          players={players}
-          teams={teams}
-          role={role}
+          players={displayedPlayers}
+          teams={displayedTeams}
+          role={effectiveRole}
           onAssignPlayerToTeam={handleAssignPlayerToTeam}
           onRemovePlayerFromTeam={handleRemovePlayerFromTeam}
         />

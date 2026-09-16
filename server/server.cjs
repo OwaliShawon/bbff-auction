@@ -39,8 +39,27 @@ const xlsx = require('xlsx');
 
 const generateTeamPin = () => Math.floor(1000 + Math.random() * 9000).toString();
 
+const DEFAULT_SEASON_ID = 'season-1-2026';
+const DEFAULT_SEASON = {
+    id: 'season-1-2026',
+    name: 'Season 1 - 2026',
+    year: 2026,
+    isArchived: false,
+    createdAt: 1773600000000
+};
+
 // Initial Data Structure
 const INITIAL_DATA = {
+    currentSeasonId: DEFAULT_SEASON_ID,
+    seasons: [
+        {
+            ...DEFAULT_SEASON,
+            players: [],
+            teams: [],
+            auction: { currentPlayerId: null, currentBid: 0, biddingTeamIds: [], isActive: false },
+            auctionLog: []
+        }
+    ],
     players: [],
     teams: [],
     auction: {
@@ -49,9 +68,34 @@ const INITIAL_DATA = {
         biddingTeamIds: [],
         isActive: false
     },
-    auctionLog: [], // Log of all auction actions
-    // role: 'VIEWER' // Default role for state, though role is usually per-user. we won't sync role. // Removed as per instruction
+    auctionLog: []
 };
+
+function normalizeAppData(data) {
+    if (!data) data = {};
+    if (!data.seasons || !Array.isArray(data.seasons) || data.seasons.length === 0) {
+        data.seasons = [
+            {
+                ...DEFAULT_SEASON,
+                players: data.players || [],
+                teams: data.teams || [],
+                auction: data.auction || { currentPlayerId: null, currentBid: 0, biddingTeamIds: [], isActive: false },
+                auctionLog: data.auctionLog || []
+            }
+        ];
+        data.currentSeasonId = DEFAULT_SEASON_ID;
+    }
+    if (!data.currentSeasonId) {
+        data.currentSeasonId = data.seasons[0].id;
+    }
+
+    const currentSeason = data.seasons.find(s => s.id === data.currentSeasonId) || data.seasons[0];
+    data.players = currentSeason.players || [];
+    data.teams = currentSeason.teams || [];
+    data.auction = currentSeason.auction || { currentPlayerId: null, currentBid: 0, biddingTeamIds: [], isActive: false };
+    data.auctionLog = currentSeason.auctionLog || [];
+    return data;
+}
 
 // Load Data
 let appData = { ...INITIAL_DATA };
@@ -75,15 +119,15 @@ async function loadData() {
     try {
         const res = await pool.query('SELECT data FROM app_state WHERE id = 1');
         if (res.rows.length > 0 && res.rows[0].data) {
-            const data = res.rows[0].data;
+            const data = normalizeAppData(res.rows[0].data);
             if (Array.isArray(data.teams)) {
                 data.teams = data.teams.map(team => ({
                     ...team,
                     pin: String(team.pin || generateTeamPin()).trim()
                 }));
             }
-            appData = { ...INITIAL_DATA, ...data };
-            console.log('Data loaded successfully from PostgreSQL database');
+            appData = data;
+            console.log('Data loaded successfully from PostgreSQL database (Seasons count: ' + appData.seasons.length + ')');
             await fs.writeJson(DB_FILE, appData, { spaces: 2 });
             return;
         }
@@ -93,14 +137,15 @@ async function loadData() {
 
     try {
         if (await fs.pathExists(DB_FILE)) {
-            const data = await fs.readJson(DB_FILE);
+            const rawData = await fs.readJson(DB_FILE);
+            const data = normalizeAppData(rawData);
             if (Array.isArray(data.teams)) {
                 data.teams = data.teams.map(team => ({
                     ...team,
                     pin: String(team.pin || generateTeamPin()).trim()
                 }));
             }
-            appData = { ...INITIAL_DATA, ...data };
+            appData = data;
             console.log('Data loaded from disk db.json, migrating to PostgreSQL...');
             await saveData();
         } else {
@@ -264,15 +309,28 @@ io.on('connection', (socket) => {
     socket.emit('init_state', appData);
 
     socket.on('update_data', async (newData) => {
-        // Merge updates (shallow or deep depending on need, here we expect full partials or full state)
-        // For simplicity, we might receive specific keys
+        if (newData.seasons) appData.seasons = newData.seasons;
+        if (newData.currentSeasonId) appData.currentSeasonId = newData.currentSeasonId;
         if (newData.players) appData.players = newData.players;
         if (newData.teams) appData.teams = newData.teams;
         if (newData.auction) appData.auction = newData.auction;
         if (newData.auctionLog) appData.auctionLog = newData.auctionLog;
 
+        // Keep current season synced in seasons array
+        if (appData.seasons && appData.currentSeasonId) {
+            const idx = appData.seasons.findIndex(s => s.id === appData.currentSeasonId);
+            if (idx !== -1) {
+                appData.seasons[idx] = {
+                    ...appData.seasons[idx],
+                    players: appData.players,
+                    teams: appData.teams,
+                    auction: appData.auction,
+                    auctionLog: appData.auctionLog
+                };
+            }
+        }
+
         await saveData();
-        // Broadcast updates to ALL clients, including sender if needed, or exclude sender
         io.emit('state_update', appData);
     });
 
